@@ -1,0 +1,77 @@
+<%= form_with(model: person) do |form| %>
+  <% if person.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(person.errors.count, "error") %> prohibited this person from being saved:</h2>
+
+      <ul>
+        <% person.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :name %>
+    <%= form.text_field :name %>
+  </div>
+
+  <div class="field">
+    <%= form.label :surname %>
+    <%= form.text_field :surname %>
+  </div>
+
+  <div class="field">
+    <%= form.label :surname2 %>
+    <%= form.text_field :surname2 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :birthdate %>
+    <%= form.date_field :birthdate %>
+  </div>
+
+  <div class="field">
+    <%= form.label :birthdateAcc %>
+    <%= form.number_field :birthdateAcc %>
+  </div>
+
+  <div class="field">
+    <%= form.label :birthorder %>
+    <%= form.number_field :birthorder %>
+  </div>
+
+  <div class="field">
+    <%= form.label :birthplace %>
+    <%= form.text_field :birthplace %>
+  </div>
+
+  <div class="field">
+    <%= form.label :death %>
+    <%= form.date_field :death %>
+  </div>
+
+  <div class="field">
+    <%= form.label :deathAcc %>
+    <%= form.number_field :deathAcc %>
+  </div>
+
+  <div class="field">
+    <%= form.label :deathplace %>
+    <%= form.text_field :deathplace %>
+  </div>
+
+  <div class="field">
+    <%= form.label :comment %>
+    <%= form.text_area :comment %>
+  </div>
+
+  <div class="field">
+    <%= form.label :childrenof_id %>
+    <%= form.number_field :childrenof_id %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit %>
+  </div>
+<% end %>

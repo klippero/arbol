@@ -1,0 +1,138 @@
+<header>
+<div class="familia">
+<h1><%= image_tag('arbol.jpg', :width => '64') %> Familia <%= @f.name %></h1>
+</div>
+<nav><ul><li><a href=index.html>  </a></li></ul></nav>
+</header>
+
+<div class="progenitores">
+
+  <% if @f.consorts.length > 0 %>
+
+    <div class="progenitor">
+      <a href=/tree/persona?p=<%= @f.consorts[0].id %>>
+        <div class="nombreApellidos">
+          <%= @f.consorts[0].fullname %>
+        </div>
+      </a>
+      <div class="nacimientoYdefuncion">
+        <%= @f.consorts[0].dates %>
+      </div>
+      <% if @f.consorts[0].childrenof && @f.consorts[0].childrenof.consorts.length > 0 %>
+        <% if !@f.consorts[0].childrenof.blank? %>
+          <a href=?f=<%= @f.consorts[0].childrenof.id %>>
+        <% end %>
+        <div class="abuelos">
+          <%= @f.consorts[0].childrenof.consorts[0].name %>
+          <% if @f.consorts[0].childrenof.consorts.length > 1 %>
+            <%= image_tag('anillos.gif', :width => '18') %>
+            <%= @f.consorts[0].childrenof.consorts[1].name %>
+          <% end %>
+        </div>
+        <% if !@f.consorts[0].childrenof.blank? %>
+          </a>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @f.consorts.length > 1 %>
+    <div class="enlace">
+      <%= image_tag('anillos.gif', :width => '22') %>
+      <% if @f.marriagedate %>
+        <br>
+        <span class=bodaTitulo>
+        <%= IncompleteDate.new(date:@f.marriagedate,accurate:@f.marriagedateAcc).to_s %>
+        </span>
+      <% end %>
+    </div>
+
+    <div class="progenitor">
+      <a href=/tree/persona?p=<%= @f.consorts[1].id %>>
+        <div class="nombreApellidos">
+          <%= @f.consorts[1].fullname %>
+        </div>
+      </a>
+      <div class="nacimientoYdefuncion">
+        <%= @f.consorts[1].dates %>
+      </div>
+      <% if @f.consorts[1].childrenof && @f.consorts[1].childrenof.consorts.length > 0 %>
+        <% if !@f.consorts[1].childrenof.blank? %>
+          <a href=?f=<%= @f.consorts[1].childrenof.id %>>
+        <% end %>
+        <div class="abuelos">
+          <%= @f.consorts[1].childrenof.consorts[0].name %>
+          <% if @f.consorts[1].childrenof.consorts.length > 1 %>
+            <%= image_tag('anillos.gif', :width => '18') %>
+            <%= @f.consorts[1].childrenof.consorts[1].name %>
+          <% end %>
+        </div>
+        <% if !@f.consorts[1].childrenof.blank? %>
+          </a>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+</div>
+
+<div class="hijos">
+
+<% @f.children.sort_by { |a| a[:birthorder]?a[:birthorder]:99 }.each do |son| %>
+  <div class="hijo">
+    <div class="orden"><%= son.birthorder %></div>
+    <a href=/tree/persona?p=<%= son.id %>><div class="hijoNombre"><%= son.name %></div></a>
+    <div class="hijoFecha"><%= son.dates %></div>
+    <% son.consortof.each do |family| %>
+      <a href=?f=<%= family.id %>>
+      <div class="conyuge">
+        <%= image_tag('anillos.gif', :width => '18') %>
+        <%= family.otherconsort( son ) %>
+      </div>
+      </a>
+    <% end %>
+  </div>
+<% end %>
+
+</div>
+
+
+
+<% if @photos.length > 0 %>
+  <div class="tituloSeccion">
+  Fotos
+  </div>
+  <div class="hijos">
+  <% @photos.sort_by(&:date).each do |photo| %>
+    <div class="foto">
+      <div class="tituloFoto">
+        <%= photo.title %>
+      </div>
+      <% if !photo.date.blank? || !photo.place.blank? %>
+        <div class="fechaFoto">
+          <%= IncompleteDate.new(date:photo.date,accurate:photo.dateAcc).to_s %>
+          <%= photo.place %>
+        </div>
+      <% end %>
+      <% if photo.image.attached? %>
+        <%= image_tag photo.image, style: 'max-width:100%;max-height:100%;' %>
+      <% end %>
+      <div class="divEnLaFoto">
+      <ul class="enLaFoto">
+        <% photo.people.each do |person| %>
+          <a href=/tree/persona?p=<%= person.id %>>
+            <li<%= (person==@p ? ' class=prota' : '') %>><%= person.name %><%= ( person.birthdate.nil? ? '' : ' (' + IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) + ')' ) %>
+            </li>
+          </a>
+        <% end %>
+      </ul>
+      </div>
+      <% if !photo.owner.blank? %>
+        <div class="divOwner">
+          Foto de <%= photo.owner %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  </div>
+<% end %>

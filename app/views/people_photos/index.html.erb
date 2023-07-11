@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<h1>People Photos</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Person</th>
+      <th>Photo</th>
+      <th>Image</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @people_photos.each do |people_photo| %>
+      <tr>
+        <td><%= Person.find(people_photo.person_id).fullname %> (<%= people_photo.person_id %>)</td>
+        <td><%= people_photo.photo_id %></td>
+<td>
+<% if Photo.find(people_photo.photo_id).image.attached? %>
+<%= image_tag Photo.find(people_photo.photo_id).image, style: 'width:100px;' %>
+<% end %>
+</td>
+        <td><%= link_to 'Show', people_photo %></td>
+        <td><%= link_to 'Edit', edit_people_photo_path(people_photo) %></td>
+        <td><%= link_to 'Destroy', people_photo, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New People Photo', new_people_photo_path %>

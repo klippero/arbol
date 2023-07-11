@@ -1,0 +1,266 @@
+@import "bootstrap/scss/bootstrap";
+
+@import url('https://fonts.googleapis.com/css2?family=Proza+Libre:wght@400;800&display=swap');
+
+body {
+    font-family: 'Proza Libre', sans-serif;
+}
+
+
+header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-bottom:2px solid #EFEFEF;
+}
+
+header h1 {
+    margin:0;
+}
+
+
+nav ul {
+   text-align: center;
+    margin:0;
+    padding:0;
+    list-style:none;
+    text-transform:uppercase;
+}
+
+nav a {
+    text-decoration: none;
+}
+
+th {
+    text-align: right;
+    font-weight:normal;
+    color: gray;
+}
+
+.nombreTitulo {  font-size: 16px; font-weight: bold}
+.fechaTitulo {  font-style: italic; color: #660033; font-size: 14px}
+.idTitulo {  font-size: 9px}
+.bodaTitulo {  color: #660033; font-size: 13px}
+
+.nombreHijo {  font-size: 16px; font-weight: normal}
+.fechaHijo {  font-style: italic; color: #660033; font-size: 13px}
+.idHijo {  font-size: 9px}
+
+.nombreAbuelo {  font-size: 14px; font-weight: bold}
+.fechaAbuelo {  font-style: italic; color: #660033; font-size: 14px}
+.idAbuelo {  font-size: 9px}
+.bodaAbuelo {  color: #660033; font-size: 13px}
+
+.unregisteredAbuelo {  font-style: italic; color: #666633; font-size: 14px}
+.value {  font-size: 18px; font-weight: bold}
+.protagonista {  font-size: 18px; font-weight: bold; color: #666666}
+.section {  font-size: 24px; font-weight: bolder; color: #666666}
+.fechas {  font-style: italic; color: #660033; font-size: 14px}
+.comentario {  font-size: 12px}
+.id {  font-size: 9px}
+.label {  font-size: 12px}
+a {text-decoration: none;}
+a:active {  color: #000000}
+a:hover {  color: #000000}
+a:link {  color: #000000}
+a:visited {  color: #000000}
+
+.familia
+{
+    padding: 1em;
+}
+.hijos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    background-color: #EFEFEF;
+    padding:10px 20px !important;
+    /*! margin: 0 0 10px; */
+}
+
+.hijo {
+    padding: 10px 20px;
+    margin: 0 10px 10px;
+    background:white;
+    width: 200px;
+  }
+.header
+{
+    background-color: #EEEEEE;
+    padding-top: 0.25em;
+    padding-bottom: 1em;
+    padding-right: 0.5em;
+    text-align: right;
+}
+.footer
+{
+    background-color: #EEEEEE;
+    padding-top: 0.25em;
+    padding-bottom: 1em;
+    padding-right: 0.5em;
+    text-align: right;
+}
+.progenitores
+{
+    background-color: #EFEFEF;
+    /*! padding-top: 0.5em; */
+    /*! padding-left: 0.5em; */
+    display: flex;
+    padding:10px;
+    justify-content: center;
+}
+.progenitor
+{
+    display: block;
+    padding: 0.5em;
+    text-align: center;
+    background-color: #EFEFEF;
+}
+.abuelos
+{
+    font-size: 14px;
+}
+.conyuge
+{
+    font-size: 13px;
+    white-space: nowrap;
+}
+.nombreApellidos
+{
+    font-size: 16px; font-weight: bold
+}
+.nacimientoYdefuncion
+{
+    font-style: italic; color: #660033; font-size: 14px
+}
+.enlace
+{
+    display: inline-block;
+    padding: 0.5em;
+    vertical-align: middle;
+    text-align: center;
+    background-color: #DDD;
+    /*! max-width: 100px; */
+    line-height: 1em;
+}
+.orden
+{
+    display: inline-block;
+    font-size: 17px
+}
+.hijoNombre
+{
+    font-size: 16px; font-weight: normal;
+}
+.hijoFecha
+{
+    font-style: italic; color: #660033; font-size: 13px;
+}
+.imagen
+{
+    padding: 0.5em;
+    max-width: 100%
+}
+img
+{
+    max-width: 100%
+}
+
+@media screen and (max-width: 600px) {
+
+    header img {
+        height: 32px;
+        width: auto;
+    }
+    
+    header h1 {
+        font-size:20px;
+        vertical-align: center;
+        
+    }
+    
+    .progenitores {
+        flex-direction: column;
+    }
+    
+    .hijos {
+        flex-direction: column;
+        padding:20px 0;
+    }
+    
+    .hijos .hijo {
+        margin:0 0 10px;
+        width: auto
+    }
+}
+
+.pConyuge
+{
+    font-size: 17px; font-weight: normal;
+    text-align: center;
+}
+.pFecha
+{
+    color: gray; font-size: 12px;
+}
+.pPropiaPersonaEnHermanos
+{
+    color: #cec7c7;
+}
+.pPropiaPersonaFecha
+{
+    color: cec7c7; font-size: 12px;
+}
+.tituloSeccion {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    background-color: rgb(255, 255, 255);
+    padding:20px 20px 10px 20px !important;
+    color: rgb(7, 7, 134);
+    font-weight: bolder;
+    font-size: 18px;
+    /*! margin: 0 0 10px; */
+}
+.propio {
+    background-color: #F3F3F3;
+}
+
+.foto {
+    padding: 10px 10px;
+    margin: 0 0 20px;
+    background:white;
+}
+.enLaFoto {
+    columns: 2;
+    -webkit-columns: 2;
+    -moz-columns: 2;  
+    font-size: 13px;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 18px
+}
+.divEnLaFoto {
+    display: flex;
+    flex-wrap: wrap;
+    padding:5px 5px 5px 5px !important;
+    color: rgb(7, 7, 134);
+}
+.prota {
+    color: #660033;
+}
+.fechaFoto
+{
+    font-style: italic; color: #660033; font-size: 13px;
+    text-align: right;
+}
+.tituloFoto
+{
+    color: #000000; font-size: 13px;
+    text-align: left;
+}
+.divOwner {
+    color: rgb(159, 159, 159);
+    text-align: right;
+    font-size: 11px;
+    font-style: italic;    
+}

@@ -1,0 +1,275 @@
+@import url('https://fonts.googleapis.com/css2?family=Proza+Libre:wght@400;800&display=swap');
+
+body {
+    font-family: 'Proza Libre', sans-serif;
+}
+
+
+header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-bottom:2px solid #EFEFEF;
+}
+
+header h1 {
+    margin:0;
+}
+
+
+nav ul {
+   text-align: center;
+    margin:0;
+    padding:0;
+    list-style:none;
+    text-transform:uppercase;
+}
+
+nav a {
+    text-decoration: none;
+}
+
+
+.nombreTitulo {  font-size: 16px; font-weight: bold}
+.fechaTitulo {  font-style: italic; color: #660033; font-size: 14px}
+.idTitulo {  font-size: 9px}
+.bodaTitulo {  color: #660033; font-size: 13px}
+
+.nombreHijo {  font-size: 16px; font-weight: normal}
+.fechaHijo {  font-style: italic; color: #660033; font-size: 13px}
+.idHijo {  font-size: 9px}
+
+.nombreAbuelo {  font-size: 14px; font-weight: bold}
+.fechaAbuelo {  font-style: italic; color: #660033; font-size: 14px}
+.idAbuelo {  font-size: 9px}
+.bodaAbuelo {  color: #660033; font-size: 13px}
+
+.unregisteredAbuelo {  font-style: italic; color: #666633; font-size: 14px}
+.value {  font-size: 18px; font-weight: bold}
+.protagonista {  font-size: 18px; font-weight: bold; color: #666666}
+.section {  font-size: 24px; font-weight: bolder; color: #666666}
+.fechas {  font-style: italic; color: #660033; font-size: 14px}
+.comentario {  font-size: 12px}
+.id {  font-size: 9px}
+.label {  font-size: 12px}
+a {text-decoration: none;}
+a:active {  color: #000000}
+a:hover {  color: #000000}
+a:link {  color: #000000}
+a:visited {  color: #000000}
+
+.familia
+{
+    padding: 1em;
+}
+.hijos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    background-color: #EFEFEF;
+    padding:10px 20px !important;
+    /*! margin: 0 0 10px; */
+}
+
+.hijo {
+    padding: 10px 20px;
+    margin: 0 10px 10px;
+    background:white;
+    width: 150px;
+  }
+.header
+{
+    background-color: #EEEEEE;
+    padding-top: 0.25em;
+    padding-bottom: 1em;
+    padding-right: 0.5em;
+    text-align: right;
+}
+.footer
+{
+    background-color: #EEEEEE;
+    padding-top: 0.25em;
+    padding-bottom: 1em;
+    padding-right: 0.5em;
+    text-align: right;
+}
+.progenitores
+{
+    background-color: #EFEFEF;
+    /*! padding-top: 0.5em; */
+    /*! padding-left: 0.5em; */
+    display: flex;
+    padding:10px;
+    justify-content: center;
+}
+.progenitor
+{
+    display: block;
+    vertical-align: middle;
+    padding: 0.5em;
+    text-align: center;
+}
+.abuelos,
+{
+    font-size: 14px;
+}
+.conyuge
+{
+    font-size: 13px;
+    white-space: nowrap;
+}
+.nombreApellidos
+{
+    font-size: 16px; font-weight: bold
+}
+.nacimientoYdefuncion
+{
+    font-style: italic; color: #660033; font-size: 14px
+}
+.enlace
+{
+    display: inline-block;
+    padding: 0.5em;
+    vertical-align: middle;
+    text-align: center;
+    background-color: #DDD;
+    /*! max-width: 100px; */
+    line-height: 1em;
+}
+.orden
+{
+    display: inline-block;
+    font-size: 17px
+}
+.hijoNombre
+{
+    font-size: 16px; font-weight: normal;
+}
+.hijoFecha
+{
+    font-style: italic; color: #660033; font-size: 13px;
+}
+.tituloFoto
+{
+    font-size: 16px; font-weight: normal;
+}
+.fechaFoto
+{
+    font-style: italic; color: #660033; font-size: 13px;
+}
+.imagen
+{
+    padding: 0.5em;
+    max-width: 100%
+}
+img
+{
+    max-width: 100%
+}
+
+@media screen and (max-width: 600px) {
+
+    header img {
+        height: 32px;
+        width: auto;
+    }
+    
+    header h1 {
+        font-size:20px;
+        vertical-align: center;
+        
+    }
+    
+    .progenitores {
+        flex-direction: column;
+    }
+    
+    .hijos {
+        flex-direction: column;
+        padding:20px 0;
+    }
+    
+    .hijos .hijo {
+        margin:0 0 10px;
+        width: auto
+    }
+    
+    
+}
+
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  width: 85%;
+  margin: 0 auto;
+}
+
+input[type="search"] {
+  border: none;
+  whitespace: wrap;
+  border-radius: 5px 5px 5px 5px;
+	background: #FFF;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0.35em 0.75em;
+	border: none;
+	font-size: 1.1em;
+	text-decoration: none;
+	line-height: normal;
+	max-height: 3em;
+  
+  flex: 2 0 250px;
+}
+
+input[type="search"]:focus {
+  background: Thistle;
+  color: white;
+  letter-spacing: .1em;
+  transition: background 400ms ease-in-out;
+  outline: none;
+}
+
+button {
+  flex: 1 0 90px;
+  
+  max-height: 3em;
+  font-size: 1.1em;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  border-radius: 0px 5px 5px 0px;
+	background: silver;
+  color: white;
+  border: none;
+  padding: 0.35em 0.75em;
+  cursor: pointer;
+
+}
+button:hover {
+  background: skyblue;
+}
+
+@media (max-width: 450px) {
+  body {
+    width: 100%;
+  }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+}
+.buscar
+{
+    background-color: #EFEFEF;
+    height: 50px;
+    padding-top: 2em;
+    padding-bottom: 1em;
+    padding-right: 0.5em;
+    text-align: center;
+}
+.resaltado
+{
+   border: dashed 2px #1f4dd9;
+}

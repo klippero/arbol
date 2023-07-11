@@ -1,0 +1,49 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>ID:</strong>
+  <%= @photo.id %>
+</p>
+
+<p>
+  <strong>Title:</strong>
+  <%= @photo.title %>
+</p>
+
+<p>
+  <strong>Date:</strong>
+  <%= @photo.date %>
+</p>
+
+<p>
+  <strong>Dateacc:</strong>
+  <%= @photo.dateAcc %>
+</p>
+
+<p>
+  <strong>Place:</strong>
+  <%= @photo.place %>
+</p>
+
+<p>
+  <strong>Owner:</strong>
+  <%= @photo.owner %>
+</p>
+
+<p>
+  <strong>Content:</strong>
+  <%= @photo.content %>
+</p>
+
+<p>
+<% if @photo.image.attached? %>
+<p>
+<strong>Image:</strong>
+<br>
+<%= image_tag @photo.image, style: 'max-width:100%;' %>
+</p>
+<% end %>
+</p>
+
+<%= link_to 'Edit', edit_photo_path(@photo) %> |
+<%= link_to 'Back', photos_path %>

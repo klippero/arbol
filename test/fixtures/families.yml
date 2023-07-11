@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  familyname: MyString
+  liveplace: MyString
+  marriagedate: 2021-03-28
+  marriagedateAcc: 1
+
+two:
+  familyname: MyString
+  liveplace: MyString
+  marriagedate: 2021-03-28
+  marriagedateAcc: 1

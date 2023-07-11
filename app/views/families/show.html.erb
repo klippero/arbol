@@ -1,0 +1,24 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Familyname:</strong>
+  <%= @family.familyname %>
+</p>
+
+<p>
+  <strong>Liveplace:</strong>
+  <%= @family.liveplace %>
+</p>
+
+<p>
+  <strong>Marriagedate:</strong>
+  <%= @family.marriagedate %>
+</p>
+
+<p>
+  <strong>Marriagedateacc:</strong>
+  <%= @family.marriagedateAcc %>
+</p>
+
+<%= link_to 'Edit', edit_family_path(@family) %> |
+<%= link_to 'Back', families_path %>

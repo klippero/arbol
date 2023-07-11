@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Families People</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Person</th>
+      <th>Family</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @families_people.each do |families_person| %>
+      <tr>
+        <td><%= families_person.person_id %></td>
+        <td><%= families_person.family_id %></td>
+        <td><%= link_to 'Show', families_person %></td>
+        <td><%= link_to 'Edit', edit_families_person_path(families_person) %></td>
+        <td><%= link_to 'Destroy', families_person, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Families Person', new_families_person_path %>
