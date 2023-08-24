@@ -12,7 +12,6 @@ class TreeController < ApplicationController
             @photos << photo
         end
     end
-    puts 1
   end
 
   def persona

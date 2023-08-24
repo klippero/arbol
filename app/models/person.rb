@@ -28,8 +28,9 @@ class Person < ApplicationRecord
 
         if fallecio?
             if !deathAcc.nil? && deathAcc != 0 && birthdateIncomplete.accurate != 0
-#                res += ' (+' + birthdateIncomplete.edad(deathIncomplete).to_s + ' años)'
                 res += ' (+' + birthdateIncomplete.to(deathIncomplete)[:str] + ')'
+            else # if birthdateIncomplete.accurate != 0
+                res += ' +'
             end
         else
             if !birthdate.nil?
@@ -68,9 +69,9 @@ class Person < ApplicationRecord
     end
 
     def genero
-        if ['Moisés','Ángel','Antonio Abilio','Toribio','Casimiro','Tomás','Félix','José Antonio','Mariano','Santiago'].include?(name)
+        if ['Yago','Moisés','Ángel','Antonio Abilio','Toribio','Casimiro','Tomás','Félix','José Antonio','Mariano','Santiago','Miguel','Roberto','Amadeo','Miguel Constancio','Daniel','Frasio','Julián','Gabriel','Diego'].include?(name)
             return :masculino
-        elsif ['Esmeralda','Delfina','Ángeles','Adelina','María','Florinda','Rosalina','María del Rosario','Marina Victoria','Elena','Virgilia','Lourdes','Cristina','Inés','María Elena','Marta','María Victoria','Ana Rosa','Beatriz','Isabel','Maribel','Teresa','Elvira'].include?(name)
+        elsif ['Berta','Esmeralda','Delfina','Ángeles','Adelina','María','Florinda','Rosalina','María del Rosario','Marina Victoria','Elena','Virgilia','Lourdes','Cristina','Inés','María Elena','Marta','María Victoria','Ana Rosa','Beatriz','Isabel','Maribel','Teresa','Elvira','Mercedes','Laia','Maite','Marisa','Anabel','Simona','Julita','Margarita','Florencia','Ángela','Antonia','Alba','Lucía'].include?(name)
             return :femenino
         else
             return nil
@@ -82,6 +83,8 @@ class Person < ApplicationRecord
         if otro != self
             if otro.hermanoDe(self)
                 res = otro.genero == :masculino ? 'hermano' : ( otro.genero == :femenino ? 'hermana' : 'herman@' )
+            elsif otro.mediohermanoDe(self)
+                res = otro.genero == :masculino ? '½hermano' : ( otro.genero == :femenino ? '½hermana' : '½herman@' )
             elsif otro.padreDe(self)
                 res = otro.genero == :masculino ? 'padre' : ( otro.genero == :femenino ? 'madre' : 'progenitor' )
             elsif otro.hijoDe(self)
@@ -106,6 +109,8 @@ class Person < ApplicationRecord
                 res = otro.genero == :masculino ? 'yerno' : ( otro.genero == :femenino ? 'nuera' : 'nuer@' )
             elsif otro.suegroDe(self)
                 res = otro.genero == :masculino ? 'suegro' : ( otro.genero == :femenino ? 'suegra' : 'suegr@' )
+            elsif otro.consuegroDe(self)
+                res = otro.genero == :masculino ? 'consuegro' : ( otro.genero == :femenino ? 'consuegra' : 'consuegr@' )
             end
         end
         return res
@@ -116,8 +121,12 @@ class Person < ApplicationRecord
             childrenof == otro.childrenof
     end
 
+    def mediohermanoDe(otro)
+        !otro.nil? && !otro.childrenof.nil? && !otro.childrenof.consorts.nil? && !childrenof.nil? && !childrenof.consorts.nil? && !( otro.childrenof.consorts & childrenof.consorts ).blank?
+    end
+
     def padreDe(otro)
-        !childrenof.nil? &&
+        !otro.childrenof.nil? &&
             consortof.include?(otro.childrenof)
     end
 
@@ -223,6 +232,16 @@ class Person < ApplicationRecord
         otro.yernoDe(self)
     end
 
+    def consuegroDe(otro)
+        consuegro = false
+        i = 0
+        while !consuegro && i<children.size
+            consuegro = children[i].yernoDe(otro)
+            i+=1
+        end
+        return consuegro
+    end
+
     def consortes
         res = []
         consortof.each do |familia|
@@ -232,9 +251,17 @@ class Person < ApplicationRecord
         return res
     end
 
+    def children
+        res = []
+        consortof.each do |familia|
+            res += familia.children
+        end
+        return res
+    end
+
     def fallecio?
         #si tiene fecha de fallecicimiento o acc=0
-        !death.nil? || ( !deathAcc.nil? && deathAcc == 0 ) || IncompleteDate.new(date:birthdate,accurate:birthdateAcc).edad() > 120
+        !death.nil? || ( !deathAcc.nil? && deathAcc == 0 ) || ( [1,3,7].include?(birthdateAcc) && IncompleteDate.new(date:birthdate,accurate:birthdateAcc).edad() > 120 )
     end
 
     def nextBirthday
