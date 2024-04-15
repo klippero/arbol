@@ -34,5 +34,7 @@ puts IncompleteDate.new(str:'2023-05-31').to
 puts IncompleteDate.new(str:'2010-12').to(IncompleteDate.new(str:'2010-12-06'))
 puts IncompleteDate.new(str:'1975').to(IncompleteDate.new(str:'1975-04-29'))
 puts IncompleteDate.new(str:'1911-7-15').to(IncompleteDate.new(str:'1944-12'))
+puts IncompleteDate.new(str:'2023-04').to(IncompleteDate.new(str:'2023-12'))
+puts IncompleteDate.new(str:'2023-04').to(IncompleteDate.new(str:'2023-03'))
 
-puts 1
+puts 10

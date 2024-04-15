@@ -1,7 +1,7 @@
 require 'date'
 
 class IncompleteDate
-    
+
     attr_reader :date, :accurate
 
     def initialize( params = {} )
@@ -91,7 +91,7 @@ class IncompleteDate
             end
         end
         return res
-    end      
+    end
 
     def edad( reference = IncompleteDate.new( date:Time.now.utc.to_date,accurate:7 ) )
         now = reference.date
@@ -127,27 +127,35 @@ class IncompleteDate
 
     def to(otra = IncompleteDate.new( date:DateTime.now.to_date,accurate:7 ))
         result = {}
+        result[:months] = 0
         if year? and otra.year?
-            result[:years] = otra.year - @date.year
+            result[:years] = 0
         end
+
+        if day? and otra.day?
+            result[:days] = otra.day - @date.day
+            if result[:days] < 0
+                result[:days] += Date.new(@date.year, @date.month, -1).day
+                result[:months] -= 1
+            end
+        end
+
         if month? and otra.month?
-            result[:months] = otra.month - @date.month
-            if result[:months] < 0 and result[:years] and result[:years] > 0
+            result[:months] = result[:months] + otra.month - @date.month
+            if result[:months] < 0
                 result[:months] += 12
                 if year? and otra.year?
                     result[:years] -= 1
                 end
             end
+        else
+            result.delete(:months)
         end
-        if day? and otra.day?
-            result[:days] = otra.day - @date.day
-            if result[:days] < 0 and result[:months] and result[:months] > 0
-                result[:days] += Date.new(@date.year, @date.month, -1).day
-                if month? and otra.month?
-                    result[:months] -= 1
-                end
-            end
+
+        if year? and otra.year?
+            result[:years] = result[:years] + otra.year - @date.year
         end
+
         result[:totalDays] = ( otra.date - @date ).to_i
 
         if month? and day? and otra.month? and otra.day?
