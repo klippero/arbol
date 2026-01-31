@@ -4,17 +4,19 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '3.4.8'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails', branch: 'main'
+<<<<<<< HEAD
 gem "rails", "~> 8.1.2"
 # Use sqlite3 as the database for Active Record
 gem "sqlite3", ">= 2.1"
+=======
+gem "rails", "8.1.2"
+# Use sqlite3 as the database for Active Record
+gem 'sqlite3', '>= 2.1'
+>>>>>>> a1e0efd (31)
 # Use Puma as the app server
-gem 'puma', '~> 5.0'
+gem "puma", ">= 6.0"
 # Use SCSS for stylesheets
 gem 'sass-rails', '>= 6'
-# Transpile app-like JavaScript. Read more: https://github.com/rails/webpacker
-gem 'webpacker', '~> 5.0'
-# Turbolinks makes navigating your web application faster. Read more: https://github.com/turbolinks/turbolinks
-gem 'turbolinks', '~> 5'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '>= 2.12.0'
 # Use Redis adapter to run Action Cable in production
@@ -56,7 +58,17 @@ end
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 gem 'devise'
+<<<<<<< HEAD
 
 gem "ffi", ">= 1.17.0"
 
 gem "bootstrap", "~> 5.3"
+=======
+gem "turbo-rails"
+gem "stimulus-rails"
+gem "importmap-rails"
+
+gem "bootstrap", ">= 5.3"
+
+gem "csv", "~> 3.3"
+>>>>>>> a1e0efd (31)
