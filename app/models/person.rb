@@ -29,7 +29,7 @@ class Person < ApplicationRecord
         if fallecio?
             if !deathAcc.nil? && deathAcc != 0 && birthdateIncomplete.accurate != 0
                 res += ' (+' + birthdateIncomplete.to(deathIncomplete)[:str] + ')'
-            else # if birthdateIncomplete.accurate != 0
+            elsif res.length > 0 and not ' +'.include?( res[0] )  # casos 257 554
                 res += ' +'
             end
         else
@@ -69,9 +69,9 @@ class Person < ApplicationRecord
     end
 
     def genero
-        if ['Yago','Moisés','Ángel','Antonio Abilio','Toribio','Casimiro','Tomás','Félix','José Antonio','Mariano','Santiago','Miguel','Roberto','Amadeo','Miguel Constancio','Daniel','Frasio','Julián','Gabriel','Diego'].include?(name)
+        if ['Yago','Moisés','Ángel','Antonio Abilio','Toribio','Casimiro','Tomás','Félix','José Antonio','Mariano','Santiago','Miguel','Roberto','Amadeo','Miguel Constancio','Daniel','Frasio','Julián','Gabriel','Diego','Ramón','Joaquín','Álvaro'].include?(name)
             return :masculino
-        elsif ['Berta','Esmeralda','Delfina','Ángeles','Adelina','María','Florinda','Rosalina','María del Rosario','Marina Victoria','Elena','Virgilia','Lourdes','Cristina','Inés','María Elena','Marta','María Victoria','Ana Rosa','Beatriz','Isabel','Maribel','Teresa','Elvira','Mercedes','Laia','Maite','Marisa','Anabel','Simona','Julita','Margarita','Florencia','Ángela','Antonia','Alba','Lucía'].include?(name)
+        elsif ['Berta','Esmeralda','Delfina','Ángeles','Adelina','María','Florinda','Rosalina','María del Rosario','Marina Victoria','Elena','Virgilia','Lourdes','Cristina','Inés','María Elena','Marta','María Victoria','Ana Rosa','Beatriz','Isabel','Maribel','Teresa','Elvira','Mercedes','Laia','Maite','Marisa','Anabel','Simona','Julita','Margarita','Florencia','Ángela','Antonia','Alba','Lucía','Laura','Marina'].include?(name)
             return :femenino
         else
             return nil
@@ -84,7 +84,7 @@ class Person < ApplicationRecord
             if otro.hermanoDe(self)
                 res = otro.genero == :masculino ? 'hermano' : ( otro.genero == :femenino ? 'hermana' : 'herman@' )
             elsif otro.mediohermanoDe(self)
-                res = otro.genero == :masculino ? '½hermano' : ( otro.genero == :femenino ? '½hermana' : '½herman@' )
+                res = otro.genero == :masculino ? '½ hermano' : ( otro.genero == :femenino ? '½ hermana' : '½ herman@' )
             elsif otro.padreDe(self)
                 res = otro.genero == :masculino ? 'padre' : ( otro.genero == :femenino ? 'madre' : 'progenitor' )
             elsif otro.hijoDe(self)
