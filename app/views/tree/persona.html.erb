@@ -1,3 +1,4 @@
+<% content_for :title, @p ? @p.fullname : 'Árbol genealógico' %>
 <header>
 <div class="familia">
 <h1><%= image_tag('hoja.jpg', :width => '64') %><%= @p.fullname %></h1>
@@ -6,96 +7,8 @@
 </header>
 
 
-    <div class="progenitor">
-      <a href=/tree/persona?p=<%= @p.id %>>
-        <div class="nombreApellidos">
-          <%= @p.fullname %>
-        </div>
-      </a>
-      <div class="nacimientoYdefuncion">
-        <%= @p.dates %>
-      </div>
-      <% if @p.childrenof && @p.childrenof.consorts.length > 0 %>
-        <% if !@p.childrenof.blank? %>
-          <a href=familia?f=<%= @p.childrenof.id %>>
-        <% end %>
-        <div class="abuelos">
-          <%= @p.childrenof.consorts[0].name %>
-          <% if @p.childrenof.consorts.length > 1 %>
-            <%= image_tag('anillos.gif', :width => '18') %>
-            <%= @p.childrenof.consorts[1].name %>
-          <% end %>
-        </div>
-        <% if !@p.childrenof.blank? %>
-          </a>
-        <% end %>
-      <% end %>
-    </div>
-
-
-<% if !@p.childrenof.blank? && @p.childrenof.children.length > 1 %>
-  <div class="tituloSeccion">
-  Hermanos
-  </div>
-
-  <div class="hijos">
-
-  <% @p.childrenof.children.sort_by { |a| a[:birthorder]?a[:birthorder]:99 }.each do |son| %>
-    <div class="hijo<%= (son.id == @p.id ? ' propio' : '') %>">
-      <div class="orden"><%= son.birthorder %></div>
-      <a href=/tree/persona?p=<%= son.id %>><div class="hijoNombre"><%= son.name %></div></a>
-      <div class="hijoFecha"><%= son.dates %></div>
-      <% son.consortof.each do |family| %>
-        <a href=familia?f=<%= family.id %>>
-        <div class="conyuge">
-          <%= image_tag('anillos.gif', :width => '18') %>
-          <%= family.otherconsort( son ) %>
-        </div>
-        </a>
-      <% end %>
-    </div>
-  <% end %>
-
-  </div>
-<% end %>
-
-
-
-<% if !@p.childrenof.nil? %>
-  <% @p.childrenof.consorts.each do |consort| %>
-    <% consort.consortof.each do |familia2| %>
-      <% if familia2 != @p.childrenof  %>
-        <div class="tituloSeccion">
-        &#189; hermanos (
-        <a href=/tree/familia?f=<%= familia2.id %>>
-        <%= consort.name %>
-        <%= image_tag('anillos.gif', :width => '18') %>
-        <%= ( @p.childrenof.firstOtherconsort( consort ).nil? ? '' : familia2.firstOtherconsort( consort ).name ) %>
-        </a>)
-        </div>
-
-  <div class="hijos">
-    <% familia2.children.sort_by { |a| a[:birthorder]?a[:birthorder]:99 }.each do |son| %>
-      <div class="hijo">
-        <div class="orden"><%= son.birthorder %></div>
-          <a href=?p=<%= son.id %>><div class="hijoNombre"><%= son.name %></div></a>
-        <div class="hijoFecha"><%= son.dates %></div>
-        <% son.consortof.each do |family| %>
-          <a href=familia?f=<%= family.id %>>
-          <div class="conyuge">
-            <%= image_tag('anillos.gif', :width => '18') %>
-            <%= family.otherconsort( son ) %>
-          </div>
-          </a>
-        <% end %>
-      </div>
-    <% end %>
-  </div>
-
-      <% end %>
-    <% end %>
-  <% end %>
-<% end %>
+    <% @person = @p %>
+<%= render 'person_info' %>
 
 
 
@@ -142,26 +55,31 @@
   Fotos
   </div>
   <div class="hijos">
-  <% @p.photos.sort_by(&:date).each do |photo| %>
+  <% @p.photos.sort_by { |p| p.date || Date.new(0) }.each do |photo| %>
     <div class="foto">
       <div class="tituloFoto">
-        <%= photo.title %>
+        <%= link_to photo.title, tree_foto_path(id: photo.id, p: @p.id) %>
       </div>
       <% if !photo.date.blank? || !photo.place.blank? %>
         <div class="fechaFoto">
           <%= IncompleteDate.new(date:photo.date,accurate:photo.dateAcc).to_s %>
           <%= photo.place %>
-          (<%= ( @p.birthdate.nil? ? '' : IncompleteDate.new(date:@p.birthdate,accurate:@p.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) ) %>)
+          <% unless @p.birthdate.nil? %>
+            (<%= IncompleteDate.new(date:@p.birthdate,accurate:@p.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) %>)
+          <% end %>
         </div>
       <% end %>
       <% if photo.image.attached? %>
-        <%= image_tag photo.image, style: 'max-width:100%;max-height:100%;' %>
+        <%= link_to tree_foto_path(id: photo.id, p: @p.id) do %>
+          <%= image_tag photo.image, style: 'max-width:100%;max-height:100%;' %>
+        <% end %>
       <% end %>
       <div class="divEnLaFoto">
       <ul class="enLaFoto">
         <% photo.people.each do |person| %>
           <a href=?p=<%= person.id %>>
-            <li<%= (person==@p ? ' class=prota' : '') %>><%= person.name %><%= ( person.birthdate.nil? ? '' : ' (' + IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) + ')' ) %>
+            <% age = person.birthdate.nil? ? '' : IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) %>
+            <li<%= (person==@p ? ' class=prota' : '') %>><%= person.name %><%= age.blank? ? '' : ' (' + age + ')' %>
               <%= @p.relacionCon(person) %>
             </li>
           </a>
@@ -177,3 +95,7 @@
   <% end %>
   </div>
 <% end %>
+
+<div class="tituloSeccion">
+  <%= link_to "Apellidos", tree_apellidos_path(p: @p.id) %>
+</div>

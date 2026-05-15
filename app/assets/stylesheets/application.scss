@@ -6,7 +6,6 @@ body {
     font-family: 'Proza Libre', sans-serif;
 }
 
-
 header {
     display: flex;
     justify-content: space-around;
@@ -172,11 +171,11 @@ img
         height: 32px;
         width: auto;
     }
-    
+
     header h1 {
         font-size:20px;
         vertical-align: center;
-        
+
     }
     
     .progenitores {
@@ -223,7 +222,12 @@ img
     /*! margin: 0 0 10px; */
 }
 .propio {
-    background-color: #F3F3F3;
+    background-color: #f9eef2;
+}
+
+.propio .hijoNombre {
+    color: #660033;
+    font-weight: bold;
 }
 
 .foto {
@@ -232,12 +236,11 @@ img
     background:white;
 }
 .enLaFoto {
-    columns: 2;
-    -webkit-columns: 2;
-    -moz-columns: 2;  
+    column-width: 130px;
+    width: 100%;
     font-size: 13px;
-    margin: 0px 0px 0px 0px;
-    padding: 0px 0px 0px 18px
+    margin: 0;
+    padding: 0 0 0 18px;
 }
 .divEnLaFoto {
     display: flex;
@@ -247,6 +250,7 @@ img
 }
 .prota {
     color: #660033;
+    font-weight: bold;
 }
 .fechaFoto
 {
@@ -263,4 +267,159 @@ img
     text-align: right;
     font-size: 11px;
     font-style: italic;    
+}
+
+.persona-busqueda {
+    padding: 0 20px 10px;
+    max-width: 48rem;
+    margin: 0 auto;
+}
+
+.persona-busqueda-campo {
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.persona-busqueda-label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 0.35rem;
+}
+
+.persona-busqueda-input {
+    width: 100%;
+    max-width: 28rem;
+    box-sizing: border-box;
+    padding: 0.45rem 0.6rem;
+    font: inherit;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.persona-busqueda-resultados {
+    position: absolute;
+    left: 0;
+    right: 0;
+    max-width: 28rem;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+    max-height: 16rem;
+    overflow-y: auto;
+}
+
+.persona-busqueda-resultados li {
+    border-bottom: 1px solid #eee;
+}
+
+.persona-busqueda-resultados li:last-child {
+    border-bottom: none;
+}
+
+.persona-busqueda-resultados a {
+    display: block;
+    padding: 0.45rem 0.6rem;
+}
+
+.persona-busqueda-nombre {
+    display: block;
+    font-weight: 600;
+}
+
+.persona-busqueda-fechas {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 12px;
+    font-style: italic;
+    color: #660033;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.persona-busqueda-resultados a:hover {
+    background: #f5f5f5;
+}
+
+.fechas-lista-hijos {
+    display: block;
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 12px 20px 20px !important;
+}
+
+.fechas-lista-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.fechas-lista-fila:not(:first-child) td {
+    border-top: 1px solid #ddd;
+}
+
+.fechas-lista-principal,
+.fechas-lista-meta {
+    padding: 0.55rem 0;
+    vertical-align: top;
+}
+
+.fechas-lista-enlace {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.fechas-lista-enlace:hover .fechas-lista-texto {
+    text-decoration: underline;
+}
+
+.fechas-lista-texto {
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+.fechas-lista-meta {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    padding-left: 1rem;
+}
+
+.fechas-lista-dias {
+    display: block;
+    color: #660033;
+    font-style: italic;
+    margin-top: 0.15rem;
+}
+
+.apellidos-chain-wrap {
+    padding: 0 20px 24px;
+}
+
+.apellidos-chain-list {
+    font-size: 15px;
+    margin: 0;
+    padding: 0 0 0 28px;
+    color: #333;
+}
+
+.apellidos-chain-list li {
+    padding: 2px 0;
+}
+
+.apellidos-chain-unknown {
+    color: #bbb;
+    font-style: italic;
+}
+
+.apellidos-chain-info {
+    color: #888;
+    font-size: 13px;
+    margin-left: 6px;
 }

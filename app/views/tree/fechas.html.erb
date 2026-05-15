@@ -1,0 +1,133 @@
+<header>
+  <div class="familia">
+    <h1><%= image_tag('hoja.jpg', :width => '64') %> Fechas</h1>
+  </div>
+  <nav><ul><li><a href=index.html>  </a></li></ul></nav>
+</header>
+
+<div class="persona-busqueda" data-url="<%= tree_personas_buscar_path %>">
+  <div class="tituloSeccion">
+    Buscar persona
+  </div>
+  <div class="persona-busqueda-campo">
+    <label for="persona-busqueda-q" class="persona-busqueda-label">Nombre, apellidos, año o lugar (nac. / def.)</label>
+    <input type="search" id="persona-busqueda-q" class="persona-busqueda-input" autocomplete="off" placeholder="Ej. García, 1964, Salamanca…" spellcheck="false">
+    <ul id="persona-busqueda-resultados" class="persona-busqueda-resultados" hidden></ul>
+  </div>
+</div>
+
+<div class="tituloSeccion">
+  Próximas fechas (nacimientos y defunciones)
+</div>
+
+<div class="hijos fechas-lista-hijos">
+  <table class="fechas-lista-tabla" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <% @eventos.each do |ev| %>
+        <% person = ev[:person] %>
+        <% days = ev[:days] %>
+        <% next_date = ev[:next_date] %>
+        <tr class="fechas-lista-fila">
+          <td class="fechas-lista-principal">
+            <%= link_to "/tree/persona?p=#{person.id}", class: "fechas-lista-enlace" do %>
+              <span class="fechas-lista-texto">
+                <% if ev[:kind] == :defuncion %>
+                  <% dm = person.defuncion_dia_mes_corto %>
+                  <% annos = person.annos_desde_fallecimiento %>
+                  <%= dm %> <%= person.fullname %><% if annos %> falleció hace <%= annos %> años<% else %> falleció<% end %>
+                <% else %>
+                  <% dm = person.nacimiento_dia_mes_corto %>
+                  <% edad_en_proximo = next_date ? person.edad_en_fecha(next_date) : nil %>
+                  <% if person.fallecio? %>
+                    <%= dm %> <%= person.fullname %><% if edad_en_proximo %> cumpliría <%= edad_en_proximo %> años<% end %>
+                  <% else %>
+                    <%= dm %> <%= person.fullname %><% if edad_en_proximo %> <%= edad_en_proximo %> cumpleaños<% end %>
+                  <% end %>
+                <% end %>
+              </span>
+            <% end %>
+          </td>
+          <td class="fechas-lista-meta" align="right">
+            <% if next_date %>
+              <%= next_date.strftime("%d/%m/%Y") %>
+              <% if days %>
+                <span class="fechas-lista-dias"><%= days %> días</span>
+              <% end %>
+            <% else %>
+              —
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= javascript_tag do %>
+  (function () {
+    var root = document.querySelector(".persona-busqueda");
+    if (!root) return;
+    var url = root.getAttribute("data-url");
+    var input = document.getElementById("persona-busqueda-q");
+    var list = document.getElementById("persona-busqueda-resultados");
+    var timer;
+
+    function clearList() {
+      list.innerHTML = "";
+      list.hidden = true;
+    }
+
+    function renderItems(items) {
+      list.innerHTML = "";
+      items.forEach(function (item) {
+        var li = document.createElement("li");
+        var a = document.createElement("a");
+        a.href = item.url;
+        var nombre = document.createElement("span");
+        nombre.className = "persona-busqueda-nombre";
+        nombre.textContent = item.label;
+        a.appendChild(nombre);
+        if (item.dates && String(item.dates).trim() !== "") {
+          var fechas = document.createElement("span");
+          fechas.className = "persona-busqueda-fechas";
+          fechas.textContent = item.dates;
+          a.appendChild(fechas);
+        }
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+      list.hidden = items.length === 0;
+    }
+
+    function runSearch() {
+      var q = input.value.trim();
+      if (q.length < 2) {
+        clearList();
+        return;
+      }
+      fetch(url + "?q=" + encodeURIComponent(q), {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin"
+      })
+        .then(function (r) { return r.json(); })
+        .then(renderItems)
+        .catch(function () { clearList(); });
+    }
+
+    input.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(runSearch, 220);
+    });
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        clearList();
+        input.blur();
+      }
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!root.contains(e.target)) clearList();
+    });
+  })();
+<% end %>

@@ -1,0 +1,332 @@
+<% content_for :title, "Árbol" %>
+
+<header>
+  <div class="familia">
+    <h1><%= image_tag 'arbol.jpg', width: 40 %> Árbol</h1>
+  </div>
+  <nav><ul><li><a href="/tree/familia?f=<%= @root_family_id %>">Vista lista</a></li></ul></nav>
+</header>
+
+<div id="arbol-wrap">
+  <div id="arbol"></div>
+</div>
+
+<style>
+#arbol-wrap {
+  overflow: auto;
+  padding: 32px 16px 48px;
+  background: #f7f5f2;
+  min-height: calc(100vh - 60px);
+}
+
+/* ── tree structure ─────────────────── */
+.tree-gen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree-couple {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  position: relative;
+}
+
+.tree-person {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  text-align: center;
+  min-width: 120px;
+  max-width: 160px;
+  cursor: default;
+  position: relative;
+}
+
+.tree-person .tp-name {
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1.3;
+}
+
+.tree-person .tp-dates {
+  font-size: 11px;
+  color: #660033;
+  font-style: italic;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.tree-person .tp-up {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  font-size: 11px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 2px 6px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  white-space: nowrap;
+  display: none;
+}
+.tree-person:hover .tp-up { display: block; }
+.tree-person .tp-up:hover { color: #660033; border-color: #660033; }
+
+.tree-rings {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  color: #999;
+  font-size: 16px;
+  background: #e8e4df;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+
+/* vertical connector from couple down to children */
+.tree-vline {
+  width: 2px;
+  height: 28px;
+  background: #ccc;
+  margin: 0 auto;
+}
+
+/* horizontal bar above children */
+.tree-hbar-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.tree-hbar {
+  position: absolute;
+  top: 0;
+  height: 2px;
+  background: #ccc;
+}
+
+.tree-children {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  position: relative;
+  padding-top: 28px;
+}
+
+.tree-child-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+/* tick from hbar down to each child */
+.tree-child-col::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 28px;
+  background: #ccc;
+}
+
+/* expand button below a child */
+.tree-expand {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #999;
+  cursor: pointer;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 1px 8px;
+  transition: color .15s, border-color .15s;
+}
+.tree-expand:hover { color: #660033; border-color: #660033; }
+.tree-expand.open { color: #660033; border-color: #660033; }
+
+.tree-subtree {
+  margin-top: 0;
+  display: none;
+}
+.tree-subtree.visible { display: block; }
+
+/* loading spinner */
+.tree-loading {
+  font-size: 11px;
+  color: #aaa;
+  padding: 4px 0;
+}
+</style>
+
+<script>
+const ROOT_ID = <%= @root_family_id %>;
+const cache   = {};
+
+async function loadFamily(id) {
+  if (cache[id]) return cache[id];
+  const r = await fetch(`/tree/familia_json?f=${id}`);
+  const data = await r.json();
+  cache[id] = data;
+  return data;
+}
+
+function personCard(p, opts = {}) {
+  const div = document.createElement('div');
+  div.className = 'tree-person';
+  div.dataset.personId = p.id;
+
+  if (opts.showUp && p.childrenof_id) {
+    const up = document.createElement('span');
+    up.className = 'tp-up';
+    up.textContent = '▲ padres';
+    up.addEventListener('click', async e => {
+      e.stopPropagation();
+      const wrap = div.closest('.tree-gen');
+      const data = await loadFamily(p.childrenof_id);
+      const parentGen = buildFamilyBlock(data, { above: true });
+      wrap.insertBefore(parentGen, wrap.firstChild);
+      up.remove();
+    });
+    div.appendChild(up);
+  }
+
+  const name = document.createElement('div');
+  name.className = 'tp-name';
+  name.textContent = p.name;
+  div.appendChild(name);
+
+  if (p.dates) {
+    const dates = document.createElement('div');
+    dates.className = 'tp-dates';
+    dates.textContent = p.dates;
+    div.appendChild(dates);
+  }
+
+  div.addEventListener('click', () => {
+    window.location.href = `/tree/persona?p=${p.id}`;
+  });
+  div.style.cursor = 'pointer';
+
+  return div;
+}
+
+function buildFamilyBlock(data, opts = {}) {
+  const gen = document.createElement('div');
+  gen.className = 'tree-gen';
+  gen.dataset.familyId = data.id;
+
+  // ── couple row ──────────────────────
+  const coupleRow = document.createElement('div');
+  coupleRow.className = 'tree-couple';
+
+  data.consorts.forEach((p, i) => {
+    if (i > 0) {
+      const rings = document.createElement('div');
+      rings.className = 'tree-rings';
+      rings.textContent = '◇';
+      coupleRow.appendChild(rings);
+    }
+    coupleRow.appendChild(personCard(p, { showUp: true }));
+  });
+  gen.appendChild(coupleRow);
+
+  if (data.children.length === 0) return gen;
+
+  // ── vertical line ────────────────────
+  const vline = document.createElement('div');
+  vline.className = 'tree-vline';
+  gen.appendChild(vline);
+
+  // ── children row ─────────────────────
+  const childrenRow = document.createElement('div');
+  childrenRow.className = 'tree-children';
+
+  data.children.forEach(child => {
+    const col = document.createElement('div');
+    col.className = 'tree-child-col';
+
+    col.appendChild(personCard(child));
+
+    if (child.consortof && child.consortof.length > 0) {
+      const famId = child.consortof[0];
+      const btn = document.createElement('button');
+      btn.className = 'tree-expand';
+      btn.textContent = '▼';
+      btn.title = 'Ver familia';
+
+      const subtree = document.createElement('div');
+      subtree.className = 'tree-subtree';
+      col.appendChild(btn);
+      col.appendChild(subtree);
+
+      let loaded = false;
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!loaded) {
+          btn.textContent = '…';
+          const subData = await loadFamily(famId);
+          const subBlock = buildFamilyBlock(subData);
+          subtree.appendChild(subBlock);
+          loaded = true;
+        }
+        const open = subtree.classList.toggle('visible');
+        btn.classList.toggle('open', open);
+        btn.textContent = open ? '▲' : '▼';
+        drawLines();
+      });
+    }
+
+    childrenRow.appendChild(col);
+  });
+
+  gen.appendChild(childrenRow);
+  drawHbar(gen);
+
+  return gen;
+}
+
+function drawHbar(gen) {
+  // CSS handles the individual ticks; the horizontal bar needs JS to span them
+  requestAnimationFrame(() => {
+    const cols = gen.querySelectorAll(':scope > .tree-children > .tree-child-col');
+    if (cols.length < 2) return;
+    const childrenDiv = gen.querySelector(':scope > .tree-children');
+    const first = cols[0].getBoundingClientRect();
+    const last  = cols[cols.length - 1].getBoundingClientRect();
+    const parent = childrenDiv.getBoundingClientRect();
+    let bar = childrenDiv.querySelector('.tree-hbar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'tree-hbar';
+      childrenDiv.style.position = 'relative';
+      childrenDiv.appendChild(bar);
+    }
+    bar.style.left  = (first.left + first.width / 2 - parent.left) + 'px';
+    bar.style.width = (last.left  + last.width  / 2 - first.left - first.width / 2) + 'px';
+  });
+}
+
+function drawLines() {
+  document.querySelectorAll('.tree-children').forEach(row => {
+    const gen = row.closest('.tree-gen');
+    drawHbar(gen);
+  });
+}
+
+window.addEventListener('resize', drawLines);
+
+(async () => {
+  const data = await loadFamily(ROOT_ID);
+  const block = buildFamilyBlock(data);
+  document.getElementById('arbol').appendChild(block);
+  drawLines();
+})();
+</script>

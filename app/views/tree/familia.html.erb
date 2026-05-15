@@ -1,3 +1,4 @@
+<% content_for :title, "Familia #{@f.name}" %>
 <header>
 <div class="familia">
 <h1><%= image_tag('arbol.jpg', :width => '64') %> Familia <%= @f.name %></h1>
@@ -103,10 +104,10 @@
   Fotos
   </div>
   <div class="hijos">
-  <% @photos.sort_by(&:date).each do |photo| %>
+  <% @photos.sort_by { |p| p.date || Date.new(0) }.each do |photo| %>
     <div class="foto">
       <div class="tituloFoto">
-        <%= photo.title %>
+        <%= link_to photo.title, tree_foto_path(id: photo.id, f: @f.id) %>
       </div>
       <% if !photo.date.blank? || !photo.place.blank? %>
         <div class="fechaFoto">
@@ -115,13 +116,16 @@
         </div>
       <% end %>
       <% if photo.image.attached? %>
-        <%= image_tag photo.image, style: 'max-width:100%;max-height:100%;' %>
+        <%= link_to tree_foto_path(id: photo.id, f: @f.id) do %>
+          <%= image_tag photo.image, style: 'max-width:100%;max-height:100%;' %>
+        <% end %>
       <% end %>
       <div class="divEnLaFoto">
       <ul class="enLaFoto">
         <% photo.people.each do |person| %>
           <a href=/tree/persona?p=<%= person.id %>>
-            <li<%= (person==@p ? ' class=prota' : '') %>><%= person.name %><%= ( person.birthdate.nil? ? '' : ' (' + IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) + ')' ) %>
+            <% age = person.birthdate.nil? ? '' : IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) %>
+            <li<%= (person==@p ? ' class=prota' : '') %>><%= person.name %><%= age.blank? ? '' : ' (' + age + ')' %>
             </li>
           </a>
         <% end %>

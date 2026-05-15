@@ -1,0 +1,58 @@
+<header>
+  <div class="familia">
+    <h1><%= image_tag('hoja.jpg', :width => '64') %> <%= @photo.title.presence || "Foto ##{@photo.id}" %></h1>
+  </div>
+  <% if @back_person || @back_family %>
+    <nav>
+      <ul>
+        <li>
+          <% if @back_person %>
+            <%= link_to "← #{@back_person.fullname}", "/tree/persona?p=#{@back_person.id}" %>
+          <% elsif @back_family %>
+            <%= link_to "← Familia #{@back_family.name}", "/tree/familia?f=#{@back_family.id}" %>
+          <% end %>
+        </li>
+      </ul>
+    </nav>
+  <% end %>
+</header>
+
+<div class="hijos">
+  <div class="foto">
+    <% if !@photo.date.blank? || !@photo.place.blank? %>
+      <div class="fechaFoto">
+        <%= IncompleteDate.new(date: @photo.date, accurate: @photo.dateAcc).to_s %>
+        <%= @photo.place %>
+        <% if @back_person && !@back_person.birthdate.nil? %>
+          (<%= IncompleteDate.new(date:@back_person.birthdate,accurate:@back_person.birthdateAcc).toStr(IncompleteDate.new(date:@photo.date,accurate:@photo.dateAcc)) %>)
+        <% end %>
+      </div>
+    <% end %>
+    <% if @photo.image.attached? %>
+      <%= image_tag @photo.image, style: 'max-width:100%;height:auto;' %>
+    <% end %>
+    <% if !@photo.content.blank? %>
+      <p><%= @photo.content %></p>
+    <% end %>
+    <div class="divEnLaFoto">
+      <ul class="enLaFoto">
+        <% @photo.people.each do |person| %>
+          <% age = person.birthdate.nil? ? '' : IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:@photo.date,accurate:@photo.dateAcc)) %>
+          <a href="/tree/persona?p=<%= person.id %>">
+            <li<%= person == @back_person ? ' class=prota' : '' %>>
+              <%= person.name %><%= age.blank? ? '' : " (#{age})" %>
+              <% if @back_person && person != @back_person %>
+                <%= @back_person.relacionCon(person) %>
+              <% end %>
+            </li>
+          </a>
+        <% end %>
+      </ul>
+    </div>
+    <% if @photo.owner.present? %>
+      <div class="divOwner">
+        Foto de <%= @photo.owner %>
+      </div>
+    <% end %>
+  </div>
+</div>

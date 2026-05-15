@@ -1,0 +1,25 @@
+<% content_for :title, @p ? "Apellidos de #{@p.fullname}" : 'Apellidos' %>
+<header>
+  <div class="familia">
+    <h1><%= image_tag('hoja.jpg', :width => '64') %> Apellidos de <%= @p.fullname %></h1>
+  </div>
+  <nav>
+    <ul>
+      <li><%= link_to "← #{@p.fullname}", "/tree/persona?p=#{@p.id}" %></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="apellidos-chain-wrap">
+  <ol class="apellidos-chain-list">
+    <% @p.apellidos_genealogicos.each do |ap, person| %>
+      <li class="<%= ap == '---' ? 'apellidos-chain-unknown' : '' %>">
+        <% if person %>
+          <%= link_to ap, "/tree/persona?p=#{person.id}" %>
+        <% else %>
+          <%= ap %>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+</div>

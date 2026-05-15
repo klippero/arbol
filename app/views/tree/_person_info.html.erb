@@ -1,0 +1,87 @@
+<div class="progenitor">
+  <a href=/tree/persona?p=<%= @person.id %>>
+    <div class="nombreApellidos">
+      <%= @person.fullname %>
+    </div>
+  </a>
+  <div class="nacimientoYdefuncion">
+    <%= @person.dates %>
+  </div>
+  <% if @person.childrenof && @person.childrenof.consorts.length > 0 %>
+    <% if !@person.childrenof.blank? %>
+      <a href=familia?f=<%= @person.childrenof.id %>>
+    <% end %>
+    <div class="abuelos">
+      <%= @person.childrenof.consorts[0].name %>
+      <% if @person.childrenof.consorts.length > 1 %>
+        <%= image_tag('anillos.gif', :width => '18') %>
+        <%= @person.childrenof.consorts[1].name %>
+      <% end %>
+    </div>
+    <% if !@person.childrenof.blank? %>
+      </a>
+    <% end %>
+  <% end %>
+</div>
+
+<% if !@person.childrenof.blank? && @person.childrenof.children.length > 1 %>
+  <div class="tituloSeccion">
+  Hermanos
+  </div>
+
+  <div class="hijos">
+
+  <% @person.childrenof.children.sort_by { |a| a[:birthorder]?a[:birthorder]:99 }.each do |son| %>
+    <div class="hijo<%= (son.id == @person.id ? ' propio' : '') %>">
+      <div class="orden"><%= son.birthorder %></div>
+      <a href=/tree/persona?p=<%= son.id %>><div class="hijoNombre"><%= son.name %></div></a>
+      <div class="hijoFecha"><%= son.dates %></div>
+      <% son.consortof.each do |family| %>
+        <a href=familia?f=<%= family.id %>>
+        <div class="conyuge">
+          <%= image_tag('anillos.gif', :width => '18') %>
+          <%= family.otherconsort( son ) %>
+        </div>
+        </a>
+      <% end %>
+    </div>
+  <% end %>
+
+  </div>
+<% end %>
+
+<% if !@person.childrenof.nil? %>
+  <% @person.childrenof.consorts.each do |consort| %>
+    <% consort.consortof.each do |familia2| %>
+      <% if familia2 != @person.childrenof  %>
+        <div class="tituloSeccion">
+        &#189; hermanos (
+        <a href=/tree/familia?f=<%= familia2.id %>>
+        <%= consort.name %>
+        <%= image_tag('anillos.gif', :width => '18') %>
+        <%= ( @person.childrenof.firstOtherconsort( consort ).nil? ? '' : familia2.firstOtherconsort( consort ).name ) %>
+        </a>)
+        </div>
+
+  <div class="hijos">
+    <% familia2.children.sort_by { |a| a[:birthorder]?a[:birthorder]:99 }.each do |son| %>
+      <div class="hijo">
+        <div class="orden"><%= son.birthorder %></div>
+          <a href=?p=<%= son.id %>><div class="hijoNombre"><%= son.name %></div></a>
+        <div class="hijoFecha"><%= son.dates %></div>
+        <% son.consortof.each do |family| %>
+          <a href=familia?f=<%= family.id %>>
+          <div class="conyuge">
+            <%= image_tag('anillos.gif', :width => '18') %>
+            <%= family.otherconsort( son ) %>
+          </div>
+          </a>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

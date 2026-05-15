@@ -1,0 +1,386 @@
+/* ── Base ── */
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Proza Libre', sans-serif;
+  margin: 0;
+  background: #fff;
+}
+
+a { text-decoration: none; color: #000; }
+a:hover { color: #000; }
+img { max-width: 100%; }
+
+/* ── Layout auth (login / registro) ── */
+body.auth-body {
+  background: #EFEFEF;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+body.auth-body a:hover { text-decoration: underline; }
+
+/* ── Header principal ── */
+.header-main {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 52px;
+  background: #660033;
+  color: #fff;
+}
+
+body {
+  padding-top: 52px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-brand img { filter: brightness(0) invert(1); opacity: .85; }
+
+.header-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: #fff;
+}
+
+.header-context {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.header-context-link { color: rgba(255,255,255,.8); }
+.header-context-link:hover { color: #fff; }
+.header-context-sep { color: rgba(255,255,255,.4); }
+
+.header-search {
+  flex: 1;
+  max-width: 200px;
+  margin: 0 0 0 auto;
+  position: relative;
+}
+
+.header-search-input {
+  width: 100%;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  outline: none;
+}
+
+.header-search-input::placeholder { color: rgba(255,255,255,.55); }
+.header-search-input:focus { background: rgba(255,255,255,.28); }
+
+.header-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.header-search-results li a {
+  display: block;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #000;
+  border-bottom: 1px solid #eee;
+}
+.header-search-results li:last-child a { border-bottom: none; }
+.header-search-results li a:hover { background: #f5f5f5; }
+
+.header-user {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: rgba(255,255,255,.85);
+}
+
+/* ── Subheader (título de familia) ── */
+.header-sub {
+  position: sticky;
+  top: 52px;
+  z-index: 900;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  padding: 8px 20px;
+  border-bottom: 2px solid #EFEFEF;
+}
+
+.header-sub h1 {
+  margin: 0;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Header (legacy, otras páginas) ── */
+header:not(.header-main) {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-bottom: 2px solid #EFEFEF;
+  padding: 8px 16px;
+}
+
+header:not(.header-main) h1 { margin: 0; font-size: 24px; display: flex; align-items: center; gap: 8px; }
+
+nav ul { text-align: center; margin: 0; padding: 0; list-style: none; text-transform: uppercase; }
+
+/* ── Familia: progenitores ── */
+.progenitores {
+  background-color: #EFEFEF;
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+}
+
+.progenitor {
+  display: block;
+  padding: 0.5em;
+  text-align: center;
+  background-color: #EFEFEF;
+}
+
+.nombreApellidos { font-size: 16px; font-weight: bold; }
+.nacimientoYdefuncion { font-style: italic; color: #660033; font-size: 14px; }
+.abuelos { font-size: 14px; }
+
+.enlace {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5em;
+  background-color: #DDD;
+  line-height: 1em;
+  min-width: 48px;
+}
+
+.bodaTitulo { color: #660033; font-size: 13px; margin-top: 4px; }
+
+/* ── Familia: hijos ── */
+.hijos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  background-color: #EFEFEF;
+  padding: 10px 20px;
+}
+
+.hijo {
+  padding: 10px 20px;
+  margin: 0 10px 10px;
+  background: white;
+  width: 200px;
+}
+
+.orden { display: inline-block; font-size: 17px; }
+.hijoNombre { font-size: 16px; font-weight: normal; }
+.hijoFecha { font-style: italic; color: #660033; font-size: 13px; }
+.conyuge { font-size: 13px; white-space: nowrap; }
+
+/* ── Familia: fotos ── */
+.tituloSeccion {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: left;
+  background-color: #fff;
+  padding: 20px 20px 10px 20px;
+  color: rgb(7, 7, 134);
+  font-weight: bolder;
+  font-size: 18px;
+}
+
+.foto {
+  padding: 10px;
+  margin: 0 0 20px;
+  background: white;
+}
+
+.tituloFoto { color: #000; font-size: 13px; text-align: left; }
+.fechaFoto { font-style: italic; color: #660033; font-size: 13px; text-align: right; }
+
+.divEnLaFoto {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 5px;
+  color: rgb(7, 7, 134);
+}
+
+.enLaFoto {
+  column-width: 130px;
+  width: 100%;
+  font-size: 13px;
+  margin: 0;
+  padding: 0 0 0 18px;
+}
+
+.prota { color: #660033; }
+
+.divOwner {
+  color: rgb(159, 159, 159);
+  text-align: right;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.foto-placeholder {
+  width: 100%;
+  max-width: 360px;
+  height: 200px;
+  background: #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 13px;
+  border: 1px dashed #ccc;
+}
+
+/* ── Auth: card ── */
+.card {
+  background: #fff;
+  width: 100%;
+  max-width: 380px;
+  padding: 36px 40px 28px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.logo img { width: 48px; }
+
+.logo-texto {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+h2 {
+  margin: 0 0 24px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.field { margin-bottom: 16px; }
+
+label {
+  display: block;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.label-hint {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+  margin-left: 4px;
+}
+
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  outline: none;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+  border-color: #660033;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.actions { margin-top: 8px; }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: #660033;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn:hover { background: #4d0026; }
+
+.enlaces {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #555;
+}
+
+.enlaces a { color: #660033; }
+.enlaces a:hover { text-decoration: underline; }
+
+/* ── Responsive ── */
+@media screen and (max-width: 600px) {
+  header h1 { font-size: 20px; }
+  .progenitores { flex-direction: column; }
+  .hijos { flex-direction: column; padding: 20px 0; }
+  .hijos .hijo { margin: 0 0 10px; width: auto; }
+}
+
+@media (max-width: 440px) {
+  .card { padding: 28px 24px 24px; }
+}

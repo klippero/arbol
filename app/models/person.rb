@@ -29,7 +29,9 @@ class Person < ApplicationRecord
         if fallecio?
             if !deathAcc.nil? && deathAcc != 0 && birthdateIncomplete.accurate != 0
                 res += ' (+' + birthdateIncomplete.to(deathIncomplete)[:str] + ')'
-            elsif res.length > 0 and not ' +'.include?( res[0] )  # casos 257 554
+            elsif res.empty?
+                res = '+'
+            elsif not ' +'.include?( res[0] )  # casos 257 554
                 res += ' +'
             end
         else
@@ -37,7 +39,7 @@ class Person < ApplicationRecord
                 res += ' (' + birthdateIncomplete.toStr + ')'
             end
         end
-          
+
         return res
     end
 
@@ -69,9 +71,9 @@ class Person < ApplicationRecord
     end
 
     def genero
-        if ['Yago','Moisés','Ángel','Antonio Abilio','Toribio','Casimiro','Tomás','Félix','José Antonio','Mariano','Santiago','Miguel','Roberto','Amadeo','Miguel Constancio','Daniel','Frasio','Julián','Gabriel','Diego','Ramón','Joaquín','Álvaro'].include?(name)
+        if ['Ramón','Joaquín','Álvaro','Yago','Moisés','Ángel','Antonio Abilio','Toribio','Casimiro','Tomás','Félix','José Antonio','Mariano','Santiago','Miguel','Roberto','Amadeo','Miguel Constancio','Daniel','Frasio','Julián','Gabriel','Diego','Ramón','Joaquín','Álvaro'].include?(name)
             return :masculino
-        elsif ['Berta','Esmeralda','Delfina','Ángeles','Adelina','María','Florinda','Rosalina','María del Rosario','Marina Victoria','Elena','Virgilia','Lourdes','Cristina','Inés','María Elena','Marta','María Victoria','Ana Rosa','Beatriz','Isabel','Maribel','Teresa','Elvira','Mercedes','Laia','Maite','Marisa','Anabel','Simona','Julita','Margarita','Florencia','Ángela','Antonia','Alba','Lucía','Laura','Marina'].include?(name)
+        elsif ['Laura','Marina','Berta','Esmeralda','Delfina','Ángeles','Adelina','María','Florinda','Rosalina','María del Rosario','Marina Victoria','Elena','Virgilia','Lourdes','Cristina','Inés','María Elena','Marta','María Victoria','Ana Rosa','Beatriz','Isabel','Maribel','Teresa','Elvira','Mercedes','Laia','Maite','Marisa','Anabel','Simona','Julita','Margarita','Florencia','Ángela','Antonia','Alba','Lucía','Laura','Marina'].include?(name)
             return :femenino
         else
             return nil
@@ -79,45 +81,48 @@ class Person < ApplicationRecord
     end
 
     def relacionCon( otro )
-        res = ''
-        if otro != self
+        return RelacionFamiliar.new(:ninguna, nil) if otro == self
+
+        kind =
             if otro.hermanoDe(self)
-                res = otro.genero == :masculino ? 'hermano' : ( otro.genero == :femenino ? 'hermana' : 'herman@' )
+                :hermano
             elsif otro.mediohermanoDe(self)
-                res = otro.genero == :masculino ? '½ hermano' : ( otro.genero == :femenino ? '½ hermana' : '½ herman@' )
+                :medio_hermano
             elsif otro.padreDe(self)
-                res = otro.genero == :masculino ? 'padre' : ( otro.genero == :femenino ? 'madre' : 'progenitor' )
+                :padre
             elsif otro.hijoDe(self)
-                res = otro.genero == :masculino ? 'hijo' : ( otro.genero == :femenino ? 'hija' : 'hij@' )
+                :hijo
             elsif otro.consorteDe(self)
-                res = 'consorte'
+                :consorte
             elsif otro.nietoDe(self)
-                res = otro.genero == :masculino ? 'nieto' : ( otro.genero == :femenino ? 'nieta' : 'niet@' )
+                :nieto
             elsif otro.abueloDe(self)
-                res = otro.genero == :masculino ? 'abuelo' : ( otro.genero == :femenino ? 'abuela' : 'abuel@' )
+                :abuelo
             elsif otro.cunadoDe(self)
-                res = otro.genero == :masculino ? 'cuñado' : ( otro.genero == :femenino ? 'cuñada' : 'cuñad@' )
+                :cunado
             elsif otro.concunadoDe(self)
-                res = otro.genero == :masculino ? 'concuñado' : ( otro.genero == :femenino ? 'concuñada' : 'concuñad@' )
+                :concunado
             elsif otro.tioDe(self)
-                res = otro.genero == :masculino ? 'tío' : ( otro.genero == :femenino ? 'tía' : 'tí@' )
+                :tio
             elsif otro.sobrinoDe(self)
-                res = otro.genero == :masculino ? 'sobrino' : ( otro.genero == :femenino ? 'sobrina' : 'sobrin@' )
+                :sobrino
             elsif otro.primoDe(self)
-                res = otro.genero == :masculino ? 'primo' : ( otro.genero == :femenino ? 'prima' : 'prim@' )
+                :primo
+            elsif otro.primo2de(self)
+                :primo2
             elsif otro.yernoDe(self)
-                res = otro.genero == :masculino ? 'yerno' : ( otro.genero == :femenino ? 'nuera' : 'nuer@' )
+                :yerno
             elsif otro.suegroDe(self)
-                res = otro.genero == :masculino ? 'suegro' : ( otro.genero == :femenino ? 'suegra' : 'suegr@' )
+                :suegro
             elsif otro.consuegroDe(self)
-                res = otro.genero == :masculino ? 'consuegro' : ( otro.genero == :femenino ? 'consuegra' : 'consuegr@' )
+                :consuegro
             end
-        end
-        return res
+
+        kind ? RelacionFamiliar.new(kind, otro.genero) : RelacionFamiliar.new(:ninguna, nil)
     end
 
     def hermanoDe(otro)
-        !otro.nil? && otro != self && !childrenof.nil? && !otro.childrenof.nil? && 
+        !otro.nil? && otro != self && !childrenof.nil? && !otro.childrenof.nil? &&
             childrenof == otro.childrenof
     end
 
@@ -217,6 +222,19 @@ class Person < ApplicationRecord
         return primo
     end
 
+    # Primos segundos: algún padre/madre de uno es primo de un padre/madre del otro.
+    def primo2de(otro)
+        return false if otro.nil? || otro == self
+        return false if childrenof.nil? || otro.childrenof.nil?
+
+        childrenof.consorts.each do |p_self|
+            otro.childrenof.consorts.each do |p_otro|
+                return true if p_self.primoDe(p_otro) || p_otro.primoDe(p_self)
+            end
+        end
+        false
+    end
+
     # Felix.yernoDe(Toribio)
     def yernoDe(otro)
         yerno = false
@@ -274,9 +292,96 @@ class Person < ApplicationRecord
         return result
     end
 
+    # "16/4" cuando hay mes y día de nacimiento (d/m sin ceros a la izquierda)
+    def nacimiento_dia_mes_corto
+        inc = IncompleteDate.new(date: birthdate, accurate: birthdateAcc)
+        return nil unless birthdate && inc.month? && inc.day?
+        "#{inc.day}/#{inc.month}"
+    end
+
+    def edad_en_fecha(d)
+        return nil unless birthdate && d
+        d.year - birthdate.year - ((d.month > birthdate.month || (d.month == birthdate.month && d.day >= birthdate.day)) ? 0 : 1)
+    end
+
+    # "27/4" día/mes de defunción cuando hay mes y día conocidos
+    def defuncion_dia_mes_corto
+        return nil unless death
+        di = IncompleteDate.new(date: death, accurate: deathAcc)
+        return nil unless di.month? && di.day?
+        "#{di.day}/#{di.month}"
+    end
+
+    # Años completos transcurridos desde la defunción hasta hoy
+    def annos_desde_fallecimiento(ref = Date.current)
+        return nil unless death
+        ref.year - death.year - ((ref.month > death.month || (ref.month == death.month && ref.day >= death.day)) ? 0 : 1)
+    end
+
     def difDates
         d1 = IncompleteDate.new(date:birthdate,accurate:birthdateAcc)
         d2 = IncompleteDate.new(date:Date.new(2010,12,6),accurate:7)
         return d1.difDates(d2).to_s
+    end
+
+    def apellidos_genealogicos
+        apellidos_rec(Set.new).reverse.drop_while { |ap, _| ap == '---' }.reverse
+    end
+
+    protected
+
+    # Si no tiene apellido 1, toma el apellido 2 y lo separa en dos por el primer espacio.
+    def effective_surnames
+        s1 = surname.presence
+        s2 = surname2.presence
+        if s1.nil? && s2&.include?(' ')
+            parts = s2.split(' ', 2)
+            [parts[0], parts[1]]
+        else
+            [s1, s2]
+        end
+    end
+
+    def apellidos_rec(visited)
+        return [] if visited.include?(id)
+        visited << id
+
+        parents = childrenof&.consorts.to_a
+        if parents.empty?
+            s1, s2 = effective_surnames
+            list = []
+            list << [s1, self] if s1.present?
+            list << [s2, self] if s2.present?
+            return list
+        end
+
+        eff_s1, _ = effective_surnames
+        father = parents.find { |p| p.surname == eff_s1 } || parents.first
+        mother = (parents - [father]).first
+
+        f_list = father.apellidos_rec(visited)
+        m_list = mother ? mother.apellidos_rec(visited) : []
+        merged = zip_merge(f_list, m_list)
+
+        eff_s1, eff_s2 = effective_surnames
+        if eff_s1.present? && merged[0]&.first != eff_s1
+            merged[0] = [eff_s1, self]
+        end
+        if eff_s2.present? && merged[1]&.first != eff_s2
+            merged[1] = [eff_s2, self]
+        end
+        merged
+    end
+
+    private
+
+    def zip_merge(a, b)
+        n = [a.size, b.size].max
+        out = []
+        n.times do |i|
+            out << (i < a.size ? a[i] : ['---', nil])
+            out << (i < b.size ? b[i] : ['---', nil])
+        end
+        out
     end
 end

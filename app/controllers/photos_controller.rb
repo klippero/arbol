@@ -38,8 +38,12 @@ class PhotosController < ApplicationController
 
   # PATCH/PUT /photos/1 or /photos/1.json
   def update
-    @photo.image.purge
-    @photo.image.attach(photo_params[:image])
+    if params[:photo][:remove_image] == "1"
+      @photo.image.purge
+    elsif params[:photo][:image].present?
+      @photo.image.purge
+      @photo.image.attach(params[:photo][:image])
+    end
 
     respond_to do |format|
       if @photo.update(photo_params)
@@ -69,6 +73,6 @@ class PhotosController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def photo_params
-      params.require(:photo).permit(:title, :date, :dateAcc, :place, :owner, :content, :image)
+      params.require(:photo).permit(:title, :date, :dateAcc, :place, :owner, :content, :image, :remove_image)
     end
 end

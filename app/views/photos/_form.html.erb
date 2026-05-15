@@ -42,8 +42,17 @@
   </div>
 
   <div class="field">
-  <%= form.label :image %>
-  <%= form.file_field :image %>
+    <%= form.label :image %>
+    <% if photo.image.attached? %>
+      <div style="margin-bottom: 8px;">
+        <%= image_tag photo.image, style: 'max-width: 200px; max-height: 150px; display: block;' %>
+        <label style="font-size: 13px; color: #555;">
+          <%= form.check_box :remove_image %>
+          Eliminar imagen
+        </label>
+      </div>
+    <% end %>
+    <%= form.file_field :image, style: 'display: block;' %>
   </div>
 
   <div class="actions">

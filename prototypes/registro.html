@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear cuenta · Árbol genealógico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Proza+Libre:wght@400;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-body">
+
+<div class="card">
+  <div class="logo">
+    <img src="../app/assets/images/arbol.jpg" alt="">
+    <span class="logo-texto">Árbol<br>genealógico</span>
+  </div>
+
+  <h2>Crear cuenta</h2>
+
+  <form action="/users" method="post">
+
+    <div class="field">
+      <label for="email">Correo electrónico</label>
+      <input type="email" id="email" name="user[email]" autofocus autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label for="password">
+        Contraseña
+        <span class="label-hint">(mínimo 6 caracteres)</span>
+      </label>
+      <input type="password" id="password" name="user[password]" autocomplete="new-password">
+    </div>
+
+    <div class="field">
+      <label for="password_confirmation">Confirmar contraseña</label>
+      <input type="password" id="password_confirmation" name="user[password_confirmation]" autocomplete="new-password">
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn">Crear cuenta</button>
+    </div>
+
+  </form>
+
+  <div class="enlaces">
+    <a href="login.html">¿Ya tienes cuenta? Iniciar sesión</a>
+  </div>
+</div>
+
+</body>
+</html>
