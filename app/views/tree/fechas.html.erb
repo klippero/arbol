@@ -1,9 +1,8 @@
 <header>
-  <div class="familia">
-    <h1><%= image_tag('hoja.jpg', :width => '64') %> Fechas</h1>
-  </div>
-  <nav><ul><li><a href=index.html>  </a></li></ul></nav>
+  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
+  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
 </header>
+<h1 class="page-title">Fechas</h1>
 
 <div class="persona-busqueda" data-url="<%= tree_personas_buscar_path %>">
   <div class="tituloSeccion">

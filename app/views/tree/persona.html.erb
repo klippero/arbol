@@ -1,10 +1,9 @@
 <% content_for :title, @p ? @p.fullname : 'Árbol genealógico' %>
 <header>
-<div class="familia">
-<h1><%= image_tag('hoja.jpg', :width => '64') %><%= @p.fullname %></h1>
-</div>
-<nav><ul><li><a href=index.html>  </a></li></ul></nav>
+  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
+  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
 </header>
+<h1 class="page-title"><%= @p.fullname %></h1>
 
 
     <% @person = @p %>
@@ -96,6 +95,3 @@
   </div>
 <% end %>
 
-<div class="tituloSeccion">
-  <%= link_to "Apellidos", tree_apellidos_path(p: @p.id) %>
-</div>

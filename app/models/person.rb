@@ -355,7 +355,7 @@ class Person < ApplicationRecord
             return list
         end
 
-        eff_s1, _ = effective_surnames
+        eff_s1, eff_s2 = effective_surnames
         father = parents.find { |p| p.surname == eff_s1 } || parents.first
         mother = (parents - [father]).first
 
@@ -363,12 +363,20 @@ class Person < ApplicationRecord
         m_list = mother ? mother.apellidos_rec(visited) : []
         merged = zip_merge(f_list, m_list)
 
-        eff_s1, eff_s2 = effective_surnames
-        if eff_s1.present? && merged[0]&.first != eff_s1
-            merged[0] = [eff_s1, self]
+        if merged.empty?
+            list = []
+            list << [eff_s1, father] if eff_s1.present?
+            list << [eff_s2, mother || father] if eff_s2.present?
+            return list
         end
-        if eff_s2.present? && merged[1]&.first != eff_s2
-            merged[1] = [eff_s2, self]
+
+        if merged[0]
+            ap = (eff_s1.present? && merged[0][0] != eff_s1) ? eff_s1 : merged[0][0]
+            merged[0] = [ap, father]
+        end
+        if merged[1]
+            ap = (eff_s2.present? && merged[1][0] != eff_s2) ? eff_s2 : merged[1][0]
+            merged[1] = [ap, mother]
         end
         merged
     end

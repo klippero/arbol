@@ -1,0 +1,76 @@
+<div class="nav-menu">
+  <button class="nav-menu-btn" id="nav-menu-btn">&#9776;</button>
+  <div class="nav-menu-dropdown" id="nav-menu-dropdown" hidden>
+    <div class="nav-busqueda" data-url="<%= tree_personas_buscar_path %>">
+      <input type="search" id="nav-busqueda-q" class="persona-busqueda-input" autocomplete="off" placeholder="Buscar persona…" spellcheck="false">
+      <ul id="nav-busqueda-resultados" class="persona-busqueda-resultados" hidden></ul>
+    </div>
+    <div class="nav-menu-logout">
+      <%= button_to "Cerrar sesión", destroy_user_session_path, method: :delete %>
+    </div>
+  </div>
+</div>
+
+<%= javascript_tag do %>
+  (function () {
+    var btn = document.getElementById("nav-menu-btn");
+    var dropdown = document.getElementById("nav-menu-dropdown");
+    var root = document.querySelector(".nav-busqueda");
+    var input = document.getElementById("nav-busqueda-q");
+    var list = document.getElementById("nav-busqueda-resultados");
+    var url = root.getAttribute("data-url");
+    var timer;
+
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      dropdown.hidden = !dropdown.hidden;
+      if (!dropdown.hidden) input.focus();
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!dropdown.contains(e.target) && e.target !== btn) {
+        dropdown.hidden = true;
+      }
+    });
+
+    function clearList() { list.innerHTML = ""; list.hidden = true; }
+
+    function renderItems(items) {
+      list.innerHTML = "";
+      items.forEach(function (item) {
+        var li = document.createElement("li");
+        var a = document.createElement("a");
+        a.href = item.url;
+        var nombre = document.createElement("span");
+        nombre.className = "persona-busqueda-nombre";
+        nombre.textContent = item.label;
+        a.appendChild(nombre);
+        if (item.dates && String(item.dates).trim() !== "") {
+          var fechas = document.createElement("span");
+          fechas.className = "persona-busqueda-fechas";
+          fechas.textContent = item.dates;
+          a.appendChild(fechas);
+        }
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+      list.hidden = items.length === 0;
+    }
+
+    input.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        var q = input.value.trim();
+        if (q.length < 2) { clearList(); return; }
+        fetch(url + "?q=" + encodeURIComponent(q), {
+          headers: { Accept: "application/json" },
+          credentials: "same-origin"
+        }).then(function (r) { return r.json(); }).then(renderItems).catch(clearList);
+      }, 220);
+    });
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { clearList(); dropdown.hidden = true; }
+    });
+  })();
+<% end %>

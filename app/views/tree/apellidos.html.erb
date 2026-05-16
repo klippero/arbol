@@ -1,14 +1,9 @@
 <% content_for :title, @p ? "Apellidos de #{@p.fullname}" : 'Apellidos' %>
 <header>
-  <div class="familia">
-    <h1><%= image_tag('hoja.jpg', :width => '64') %> Apellidos de <%= @p.fullname %></h1>
-  </div>
-  <nav>
-    <ul>
-      <li><%= link_to "← #{@p.fullname}", "/tree/persona?p=#{@p.id}" %></li>
-    </ul>
-  </nav>
+  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
+  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
 </header>
+<h1 class="page-title">Apellidos de <%= @p.fullname %></h1>
 
 <div class="apellidos-chain-wrap">
   <ol class="apellidos-chain-list">
@@ -16,6 +11,7 @@
       <li class="<%= ap == '---' ? 'apellidos-chain-unknown' : '' %>">
         <% if person %>
           <%= link_to ap, "/tree/persona?p=#{person.id}" %>
+          <span class="apellidos-chain-info">(<%= person.fullname %><%= person.dates.present? ? ", #{person.dates}" : "" %>)</span>
         <% else %>
           <%= ap %>
         <% end %>

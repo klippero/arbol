@@ -14,7 +14,7 @@ Rails.application.routes.draw do
   resources :photos
   resources :families
   resources :people
-  root to: redirect('/tree/familia?f=1')
+  root to: redirect('/tree/fechas')
 
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
 end

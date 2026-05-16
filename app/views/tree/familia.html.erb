@@ -1,10 +1,9 @@
 <% content_for :title, "Familia #{@f.name}" %>
 <header>
-<div class="familia">
-<h1><%= image_tag('arbol.jpg', :width => '64') %> Familia <%= @f.name %></h1>
-</div>
-<nav><ul><li><a href=index.html>  </a></li></ul></nav>
+  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
+  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
 </header>
+<h1 class="page-title">Familia <%= @f.name %></h1>
 
 <div class="progenitores">
 
