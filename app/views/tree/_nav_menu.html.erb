@@ -6,7 +6,8 @@
       <ul id="nav-busqueda-resultados" class="persona-busqueda-resultados" hidden></ul>
     </div>
     <div class="nav-menu-logout">
-      <%= button_to "Cerrar sesión", destroy_user_session_path, method: :delete %>
+      <%= link_to "Salir", destroy_user_session_path, data: { turbo_method: :delete } %>
+      <span class="nav-menu-version">v2.0</span>
     </div>
   </div>
 </div>
