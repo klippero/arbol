@@ -28,27 +28,13 @@
         <% end %>
       </div>
     <% end %>
-    <% if @photo.image.attached? %>
-      <%= image_tag @photo.image, style: 'max-width:100%;height:auto;' %>
-    <% end %>
     <% if !@photo.content.blank? %>
       <p><%= @photo.content %></p>
     <% end %>
-    <div class="divEnLaFoto">
-      <ul class="enLaFoto">
-        <% @photo.people.each do |person| %>
-          <% age = person.birthdate.nil? ? '' : IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:@photo.date,accurate:@photo.dateAcc)) %>
-          <a href="/tree/persona?p=<%= person.id %>">
-            <li<%= person == @back_person ? ' class=prota' : '' %>>
-              <%= person.name %><%= age.blank? ? '' : " (#{age})" %>
-              <% if @back_person && person != @back_person %>
-                <%= @back_person.relacionCon(person) %>
-              <% end %>
-            </li>
-          </a>
-        <% end %>
-      </ul>
-    </div>
+    <% has_prota_contour = @back_person.present? && @photo.people_photos.any? { |pp| pp.person_id == @back_person.id && pp.display_points&.any? } %>
+    <% has_other_contour = @photo.people_photos.any? { |pp| pp.person_id != @back_person&.id && pp.display_points&.any? } %>
+    <%= render 'contour_mode_select', has_prota_contour: has_prota_contour, has_other_contour: has_other_contour, highlight_name: @back_person&.name %>
+    <%= render 'photo_contours', photo: @photo, highlight_person: @back_person, image_link_path: nil %>
     <% if @photo.owner.present? %>
       <div class="divOwner">
         Foto de <%= @photo.owner %>
@@ -56,3 +42,5 @@
     <% end %>
   </div>
 </div>
+
+<%= render 'contour_scripts', highlight_person_id: @back_person&.id %>

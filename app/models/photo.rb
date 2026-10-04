@@ -1,5 +1,7 @@
 class Photo < ApplicationRecord
-    has_and_belongs_to_many :people
+    has_many :people_photos, dependent: :destroy
+    has_many :people, through: :people_photos
+    accepts_nested_attributes_for :people_photos, allow_destroy: true
     has_one_attached :image
 
     def info_to_dropdown

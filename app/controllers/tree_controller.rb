@@ -38,7 +38,7 @@ class TreeController < ApplicationController
   def persona
     if params[:p]
       @p = Person.find(params[:p].to_i)
-      @photos = @p.photos.sort_by { |p| p.date || Date.new(0) }
+      @photos = @p.photos.includes(:people, people_photos: :person).sort_by { |p| p.date || Date.new(0) }
       @f = @p.childrenof
     else
       @p = nil
@@ -59,8 +59,9 @@ class TreeController < ApplicationController
   def fechas
     eventos = []
     kind_order = { nacimiento: 0, defuncion: 1 }
+    related_ids = Person.related_to_root_ids
 
-    Person.where.not(birthdate: nil).find_each do |p|
+    Person.where.not(birthdate: nil).where(id: related_ids).find_each do |p|
       inc = IncompleteDate.new(date: p.birthdate, accurate: p.birthdateAcc)
       next unless inc.month? && inc.day?
       t = inc.to
@@ -74,7 +75,7 @@ class TreeController < ApplicationController
       }
     end
 
-    Person.where.not(death: nil).find_each do |p|
+    Person.where.not(death: nil).where(id: related_ids).find_each do |p|
       next unless p.fallecio?
       di = IncompleteDate.new(date: p.death, accurate: p.deathAcc)
       next unless di.month? && di.day?
@@ -120,7 +121,10 @@ class TreeController < ApplicationController
       scope = scope.where("(#{haystack} LIKE :t OR #{date_match})", t: token)
     end
 
-    people = scope.order(Arel.sql("COALESCE(people.surname,''), COALESCE(people.name,'')")).limit(25)
+    related_ids = Person.related_to_root_ids
+    people = scope.where(id: related_ids)
+                  .order(Arel.sql("COALESCE(people.surname,''), COALESCE(people.name,'')"))
+                  .limit(25)
     render json: people.map { |p|
       {
         id: p.id,
@@ -133,5 +137,42 @@ class TreeController < ApplicationController
 
   def cumples
     puts 1
+  end
+
+  def versiones
+    @versiones = [
+      {
+        version: "v3.0",
+        fecha: "hoy",
+        actual: true,
+        cambios: [
+          "Contornos de personas en las fotos (persona, familia y foto): mostrar/ocultar por protagonista o para todos, etiquetas con el nombre que nunca se salen de la foto",
+          "El buscador y la home solo muestran personas con relación familiar (sanguínea o política) conmigo, de cualquier grado",
+          "Correcciones en fechas y edades: no mostrar edades imposibles cuando no se conoce el año, \"hoy\"/\"mañana\" en el listado de próximas fechas, sin paréntesis vacíos",
+          "Numeración y maquetación del listado de personas al pie de cada foto"
+        ]
+      },
+      {
+        version: "v2.0",
+        fecha: "6/6/2026",
+        actual: false,
+        cambios: [
+          "Buscador de personas y listado de próximas fechas (nacimientos y defunciones)",
+          "Relación de primo segundo",
+          "Página individual de foto",
+          "Listado fluido de personas al pie de las fotos",
+          "Poder editar una foto sin tener que volver a subirla",
+          "Varios bugs corregidos (fechas, fotos sin imagen, nombres y apellidos)"
+        ]
+      },
+      {
+        version: "v1.0",
+        fecha: "11/7/2023",
+        actual: false,
+        cambios: [
+          "Versión original de la aplicación, hecha antes de usar IA: árbol genealógico, páginas de persona y familia, gestión de fotos y autenticación"
+        ]
+      }
+    ]
   end
 end

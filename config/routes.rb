@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   get 'tree/fechas', to: 'tree#fechas', as: :tree_fechas
   get 'tree/personas_buscar', to: 'tree#personas_buscar', as: :tree_personas_buscar
   get 'tree/apellidos', to: 'tree#apellidos', as: :tree_apellidos
+  get 'tree/versiones', to: 'tree#versiones', as: :tree_versiones
   get 'tree/cumples'
   get 'tree/new'
   get 'tree/familia_json', to: 'tree#familia_json'

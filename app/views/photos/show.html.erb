@@ -1,49 +1,87 @@
 <p id="notice"><%= notice %></p>
 
-<p>
-  <strong>ID:</strong>
-  <%= @photo.id %>
-</p>
+<p><strong>ID:</strong> <%= @photo.id %></p>
+<p><strong>Title:</strong> <%= @photo.title %></p>
+<p><strong>Date:</strong> <%= @photo.date %></p>
+<p><strong>Dateacc:</strong> <%= @photo.dateAcc %></p>
+<p><strong>Place:</strong> <%= @photo.place %></p>
+<p><strong>Owner:</strong> <%= @photo.owner %></p>
+<p><strong>Content:</strong> <%= @photo.content %></p>
 
-<p>
-  <strong>Title:</strong>
-  <%= @photo.title %>
-</p>
-
-<p>
-  <strong>Date:</strong>
-  <%= @photo.date %>
-</p>
-
-<p>
-  <strong>Dateacc:</strong>
-  <%= @photo.dateAcc %>
-</p>
-
-<p>
-  <strong>Place:</strong>
-  <%= @photo.place %>
-</p>
-
-<p>
-  <strong>Owner:</strong>
-  <%= @photo.owner %>
-</p>
-
-<p>
-  <strong>Content:</strong>
-  <%= @photo.content %>
-</p>
-
-<p>
 <% if @photo.image.attached? %>
-<p>
-<strong>Image:</strong>
-<br>
-<%= image_tag @photo.image, style: 'max-width:100%;' %>
-</p>
+  <% people_photos = @photo.people_photos.includes(:person).order('people.surname, people.surname2, people.name') %>
+
+  <div id="photo-container" style="position:relative; display:inline-block; max-width:100%;">
+    <%= image_tag @photo.image, id:'photo-img', style:'display:block; max-width:100%;' %>
+
+    <svg id="photo-svg"
+         viewBox="0 0 100 100" preserveAspectRatio="none"
+         style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;">
+      <% people_photos.each do |pp| %>
+        <% pts = pp.display_points %>
+        <% if pts&.any? %>
+          <polygon id="poly-<%= pp.id %>"
+                   points="<%= pts.map { |p| "#{p[0]},#{p[1]}" }.join(' ') %>"
+                   fill="rgba(220,0,0,0.15)"
+                   stroke="#e00"
+                   stroke-width="0.4"
+                   vector-effect="non-scaling-stroke"
+                   style="display:none;"/>
+        <% end %>
+      <% end %>
+    </svg>
+  </div>
+
+  <% if people_photos.any? %>
+    <div style="margin-top:10px;">
+      <% people_photos.each do |pp| %>
+        <span class="person-tag"
+              data-pp-id="<%= pp.id %>"
+              data-has-poly="<%= pp.display_points.present? %>"
+              onclick="togglePoly(this)"
+              style="display:inline-block;margin:2px 4px 2px 0;padding:3px 8px;
+                     background:#eee;border:1px solid #bbb;cursor:pointer;user-select:none;">
+          <%= pp.person.info_to_dropdown %>
+          <% if pp.display_points.present? %>
+            <span style="font-size:10px;color:#888;">⬚</span>
+          <% end %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
 <% end %>
-</p>
 
 <%= link_to 'Edit', edit_photo_path(@photo) %> |
 <%= link_to 'Back', photos_path %>
+
+<script>
+(function () {
+  var active = null;
+
+  window.togglePoly = function (el) {
+    var id   = el.dataset.ppId;
+    var poly = document.getElementById('poly-' + id);
+
+    // Deselect previous
+    if (active && active !== el) {
+      active.style.background  = '#eee';
+      active.style.fontWeight  = '';
+      var prevPoly = document.getElementById('poly-' + active.dataset.ppId);
+      if (prevPoly) prevPoly.style.display = 'none';
+    }
+
+    if (active === el) {
+      el.style.background = '#eee';
+      el.style.fontWeight = '';
+      if (poly) poly.style.display = 'none';
+      active = null;
+      return;
+    }
+
+    active = el;
+    el.style.background = '#fffacc';
+    el.style.fontWeight = 'bold';
+    if (poly) poly.style.display = 'block';
+  };
+})();
+</script>

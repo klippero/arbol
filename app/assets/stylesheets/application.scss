@@ -124,6 +124,11 @@ header h1 {
 .nav-menu-version {
     font-size: 11px;
     color: #aaa;
+    text-decoration: none;
+}
+.nav-menu-version:hover {
+    color: #aaa;
+    text-decoration: underline;
 }
 
 
@@ -345,11 +350,22 @@ img
     background:white;
 }
 .enLaFoto {
-    column-width: 130px;
+    column-width: 170px;
     width: 100%;
     font-size: 13px;
     margin: 0;
-    padding: 0 0 0 18px;
+    padding: 0;
+    list-style: none;
+    counter-reset: contorno-num;
+}
+.enLaFoto li.tieneContorno::before,
+.enLaFoto li.sinContorno::before {
+    counter-increment: contorno-num;
+    content: counter(contorno-num) ".";
+    display: inline-block;
+    min-width: 20px;
+    text-align: right;
+    margin-right: 2px;
 }
 .divEnLaFoto {
     display: flex;
@@ -531,4 +547,145 @@ img
     color: #888;
     font-size: 13px;
     margin-left: 6px;
+}
+
+.contour-label {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  background: rgba(255,255,255,0.95);
+  border: 1.5px solid #ffcc00;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: normal;
+  color: #333;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+.contour-label-prota { font-weight: bold; color: #660033; }
+.contour-mode-select { margin-left: 10px; font-size: 13px; }
+/* flecha apuntando hacia abajo (etiqueta encima del contorno, posición por defecto) */
+.contour-label::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom: none;
+  border-top-color: rgba(255,255,255,0.95);
+}
+.contour-label::before {
+  content: '';
+  position: absolute;
+  top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-bottom: none;
+  border-top-color: #ffcc00;
+}
+/* flecha apuntando hacia arriba (etiqueta debajo del contorno) */
+.contour-label.pos-below::after {
+  top: auto; bottom: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top: none;
+  border-bottom-color: rgba(255,255,255,0.95);
+}
+.contour-label.pos-below::before {
+  top: auto; bottom: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top: none;
+  border-bottom-color: #ffcc00;
+}
+/* flecha apuntando hacia la derecha (etiqueta a la izquierda del contorno) */
+.contour-label.pos-left::after {
+  top: 50%; left: 100%; bottom: auto;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left: none;
+  border-right-color: rgba(255,255,255,0.95);
+}
+.contour-label.pos-left::before {
+  top: 50%; left: 100%; bottom: auto;
+  transform: translateY(-50%);
+  border: 7px solid transparent;
+  border-left: none;
+  border-right-color: #ffcc00;
+}
+/* flecha apuntando hacia la izquierda (etiqueta a la derecha del contorno) */
+.contour-label.pos-right::after {
+  top: 50%; left: auto; right: 100%; bottom: auto;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right: none;
+  border-left-color: rgba(255,255,255,0.95);
+}
+.contour-label.pos-right::before {
+  top: 50%; left: auto; right: 100%; bottom: auto;
+  transform: translateY(-50%);
+  border: 7px solid transparent;
+  border-right: none;
+  border-left-color: #ffcc00;
+}
+
+.versiones-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 10px 20px 30px;
+}
+.version-card {
+    background: #fff;
+    border-left: 4px solid #ccc;
+    border-radius: 4px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.version-card.actual {
+    border-left-color: #660033;
+}
+.version-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.version-numero {
+    color: rgb(7, 7, 134);
+    font-weight: bolder;
+    font-size: 18px;
+}
+.version-card.actual .version-numero {
+    color: #660033;
+}
+.version-badge {
+    background: #660033;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.version-fecha {
+    color: #999;
+    font-size: 13px;
+    margin-left: auto;
+}
+.version-cambios {
+    margin: 0;
+    padding: 0 0 0 20px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.version-cambios li {
+    margin-bottom: 4px;
+}
+.version-cambios li:last-child {
+    margin-bottom: 0;
 }

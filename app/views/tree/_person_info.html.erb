@@ -6,7 +6,7 @@
       <span class="persona-info-label">Nacimiento</span>
       <span class="persona-info-valor">
         <%= bd.to_s %> <%= @person.birthplace %>
-        <% if !@person.fallecio? && @person.birthdate.present? && @person.birthdateAcc.to_i != 0 %>
+        <% if !@person.fallecio? && bd.toStr.present? %>
           (<%= bd.toStr %>)
         <% end %>
       </span>
@@ -17,8 +17,9 @@
       <span class="persona-info-label">Defunción</span>
       <span class="persona-info-valor">
         <%= dd.to_s %> <%= @person.deathplace %>
-        <% if @person.birthdate.present? && @person.birthdateAcc.to_i != 0 && @person.deathAcc.to_i != 0 %>
-          (+ <%= bd.to(dd)[:str] %>)
+        <% edad_al_morir = @person.birthdate.present? ? bd.to(dd)[:str] : nil %>
+        <% if edad_al_morir.present? %>
+          (+ <%= edad_al_morir %>)
         <% end %>
       </span>
     </div>

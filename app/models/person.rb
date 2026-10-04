@@ -1,7 +1,42 @@
 class Person < ApplicationRecord
     belongs_to :childrenof, optional: true, inverse_of: :children, class_name: "Family"
-    has_and_belongs_to_many :photos
+    has_many :people_photos
+    has_many :photos, through: :people_photos
     has_and_belongs_to_many :consortof, class_name: "Family", inverse_of: :consorts
+
+    ROOT_PERSON_ID = 7
+
+    def self.root
+        find(ROOT_PERSON_ID)
+    end
+
+    # ids de las personas con parentesco (sanguíneo o político) con la raíz, o la raíz misma: toda la
+    # componente conexa de su árbol familiar, recorriendo padres, hijos y cónyuges en cualquier
+    # dirección y sin límite de generaciones (cubre ascendientes/descendientes de cualquier grado,
+    # cónyuges de parientes, ascendientes de cónyuges, etc.).
+    # Se cachea porque recorrer todo el árbol es costoso y el parentesco apenas cambia.
+    def self.related_to_root_ids
+        Rails.cache.fetch("person_related_to_root_ids_v4_#{ROOT_PERSON_ID}", expires_in: 1.hour) do
+            root = find(ROOT_PERSON_ID)
+            visited = { root.id => true }
+            queue = [root]
+
+            until queue.empty?
+                persona = queue.shift
+                vecinos = []
+                vecinos += persona.childrenof&.consorts.to_a
+                vecinos += persona.consortof.flat_map(&:children)
+                vecinos += persona.consortof.flat_map(&:consorts)
+                vecinos.each do |vecino|
+                    next if visited[vecino.id]
+                    visited[vecino.id] = true
+                    queue << vecino
+                end
+            end
+
+            visited.keys
+        end
+    end
 
     def fullname
         ( self.name ? self.name : "" ) + ( self.surname ? " " + self.surname : "" ) + ( self.surname2 ?  " " + self.surname2 : "" )
@@ -27,15 +62,16 @@ class Person < ApplicationRecord
         end
 
         if fallecio?
-            if !deathAcc.nil? && deathAcc != 0 && birthdateIncomplete.accurate != 0
-                res += ' (+' + birthdateIncomplete.to(deathIncomplete)[:str] + ')'
+            edad_al_morir = birthdateIncomplete.to(deathIncomplete)[:str]
+            if !deathAcc.nil? && deathAcc != 0 && birthdateIncomplete.accurate != 0 && edad_al_morir.present?
+                res += ' (+' + edad_al_morir + ')'
             elsif res.empty?
                 res = '+'
             elsif not ' +'.include?( res[0] )  # casos 257 554
                 res += ' +'
             end
         else
-            if !birthdate.nil?
+            if !birthdate.nil? && birthdateIncomplete.toStr.present?
                 res += ' (' + birthdateIncomplete.toStr + ')'
             end
         end
@@ -301,6 +337,7 @@ class Person < ApplicationRecord
 
     def edad_en_fecha(d)
         return nil unless birthdate && d
+        return nil unless IncompleteDate.new(date: birthdate, accurate: birthdateAcc).year?
         d.year - birthdate.year - ((d.month > birthdate.month || (d.month == birthdate.month && d.day >= birthdate.day)) ? 0 : 1)
     end
 
@@ -315,6 +352,7 @@ class Person < ApplicationRecord
     # Años completos transcurridos desde la defunción hasta hoy
     def annos_desde_fallecimiento(ref = Date.current)
         return nil unless death
+        return nil unless IncompleteDate.new(date: death, accurate: deathAcc).year?
         ref.year - death.year - ((ref.month > death.month || (ref.month == death.month && ref.day >= death.day)) ? 0 : 1)
     end
 

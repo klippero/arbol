@@ -1,0 +1,225 @@
+<%# locals: highlight_person_id: (nilable) %>
+<script>
+var PROTA_ID = <%= highlight_person_id.to_json %>;
+var CONTOUR_MODE_KEY = 'arbolContourMode';
+var mobileMql = window.matchMedia('(max-width: 600px)');
+
+function getContourMode() {
+  try { return localStorage.getItem(CONTOUR_MODE_KEY) || 'all'; } catch (e) { return 'all'; }
+}
+
+function setContourMode(mode) {
+  try { localStorage.setItem(CONTOUR_MODE_KEY, mode); } catch (e) {}
+}
+
+function applyContourMode(mode) {
+  document.querySelectorAll('[data-photo-wrap]').forEach(function(wrap) {
+    var photoId = wrap.dataset.photoWrap;
+    var rect     = document.getElementById('dark-rect-' + photoId);
+    var hasProta = rect && rect.dataset.hasProta === '1';
+    var hasAny   = rect && rect.dataset.hasAny   === '1';
+
+    if (rect) {
+      var showRect = mode !== 'none' && (mode === 'prota' ? hasProta : hasAny);
+      rect.style.display = showRect ? 'block' : 'none';
+    }
+
+    document.querySelectorAll('.mask-hole[data-photo-id="' + photoId + '"]').forEach(function(hole) {
+      var isProta = hole.dataset.personId === String(PROTA_ID);
+      var show = mode === 'all' || (mode === 'prota' && isProta);
+      hole.style.display = show ? 'block' : 'none';
+    });
+
+    document.querySelectorAll('.contour-label[data-photo-id="' + photoId + '"]').forEach(function(lbl) {
+      var isProta = lbl.dataset.personId === String(PROTA_ID);
+      var show = mode === 'all' || (mode === 'prota' && isProta);
+      if (show) {
+        lbl.style.display = 'block';
+        lbl.textContent   = labelText(photoId, lbl.dataset.personId, lbl.dataset.personName);
+        positionLabel(photoId, lbl.dataset.personId);
+      } else {
+        lbl.style.display = 'none';
+        lbl.classList.remove('pos-below', 'pos-left', 'pos-right');
+      }
+    });
+  });
+}
+
+/* número que se le asigna a esta persona en el listado de abajo de la foto
+   (el mismo que pinta el contador CSS, que numera todas las <li> por igual) */
+function getListNumber(photoId, personId) {
+  var ul = document.getElementById('people-list-' + photoId);
+  if (!ul) return null;
+  var items = Array.prototype.slice.call(ul.querySelectorAll('li'));
+  var idx = items.findIndex(function(li) { return li.dataset.personId === String(personId); });
+  return idx === -1 ? null : (idx + 1);
+}
+
+/* en móvil, mostrar el número del listado en vez del nombre */
+function labelText(photoId, personId, name) {
+  if (!mobileMql.matches) return name;
+  var n = getListNumber(photoId, personId);
+  return n === null ? name : String(n);
+}
+
+function refreshAllLabelsText() {
+  document.querySelectorAll('.contour-label').forEach(function(lbl) {
+    if (!lbl.dataset.personName) return;
+    lbl.textContent = labelText(lbl.dataset.photoId, lbl.dataset.personId, lbl.dataset.personName);
+  });
+}
+mobileMql.addEventListener('change', refreshAllLabelsText);
+
+function positionLabel(photoId, personId) {
+  var wrap = document.querySelector('[data-photo-wrap="' + photoId + '"]');
+  if (!wrap) return;
+  var wR = wrap.getBoundingClientRect();
+  if (wR.height < 1) return;
+
+  var lbl = document.querySelector(
+    '.contour-label[data-photo-id="' + photoId + '"][data-person-id="' + personId + '"]'
+  );
+  if (!lbl || lbl.style.display === 'none') return;
+
+  /* puntos y bbox (en %) de todos los polígonos */
+  var polyBoxes = {};
+  document.querySelectorAll('.hover-poly[data-photo-id="' + photoId + '"]').forEach(function(poly) {
+    var raw = poly.getAttribute('points').trim();
+    if (!raw) return;
+    var pts = raw.split(/\s+/).map(function(p) {
+      var xy = p.split(','); return [parseFloat(xy[0]), parseFloat(xy[1])];
+    }).filter(function(p) { return !isNaN(p[0]); });
+    if (pts.length < 3) return;
+    polyBoxes[poly.dataset.personId] = {
+      pts:  pts,
+      minX: Math.min.apply(null, pts.map(function(p) { return p[0]; })),
+      maxX: Math.max.apply(null, pts.map(function(p) { return p[0]; })),
+      minY: Math.min.apply(null, pts.map(function(p) { return p[1]; })),
+      maxY: Math.max.apply(null, pts.map(function(p) { return p[1]; }))
+    };
+  });
+
+  var pb = polyBoxes[personId];
+  if (!pb) return;
+
+  /* contornos de TODAS las demás personas de la foto (activos o no):
+     la etiqueta no debe taparlos, sean o no visibles ahora mismo */
+  var otherIds = Object.keys(polyBoxes).filter(function(pid) { return pid !== String(personId); });
+
+  /* side según qué borde del bounding box está más cerca del vértice */
+  function sideFor(vx, vy) {
+    var dT = vy - pb.minY, dB = pb.maxY - vy, dL = vx - pb.minX, dR = pb.maxX - vx;
+    var m = Math.min(dT, dB, dL, dR);
+    if (m === dT) return 'top';
+    if (m === dB) return 'bottom';
+    if (m === dL) return 'left';
+    return 'right';
+  }
+
+  /* ancla la etiqueta exactamente sobre un vértice real del contorno
+     (garantiza que la flecha siempre lo toca, sea cual sea su forma) */
+  function setPosAt(vx, vy, side) {
+    var transform;
+    if (side === 'left')       transform = 'translate(calc(-100% - 8px), -50%)';
+    else if (side === 'right') transform = 'translate(8px, -50%)';
+    else if (side === 'bottom') transform = 'translate(-50%, 8px)';
+    else                        transform = 'translate(-50%, calc(-100% - 8px))';
+    lbl.style.left      = vx + '%';
+    lbl.style.top       = vy + '%';
+    lbl.style.transform = transform;
+    lbl.classList.remove('pos-below', 'pos-left', 'pos-right');
+    if (side !== 'top') lbl.classList.add(side === 'bottom' ? 'pos-below' : 'pos-' + side);
+  }
+
+  function pisaOtroContorno() {
+    var lr = lbl.getBoundingClientRect();
+    if (lr.width < 1) return false;
+    var lT = (lr.top    - wR.top)  / wR.height * 100;
+    var lB = (lr.bottom - wR.top)  / wR.height * 100;
+    var lL = (lr.left   - wR.left) / wR.width  * 100;
+    var lR = (lr.right  - wR.left) / wR.width  * 100;
+    return otherIds.some(function(pid) {
+      var b = polyBoxes[pid];
+      return b && lL < b.maxX && lR > b.minX && lT < b.maxY && lB > b.minY;
+    });
+  }
+
+  /* la etiqueta nunca debe quedar fuera de los límites de la foto */
+  function fueraDeLaFoto() {
+    var lr = lbl.getBoundingClientRect();
+    if (lr.width < 1) return false;
+    return lr.left < wR.left || lr.right > wR.right || lr.top < wR.top || lr.bottom > wR.bottom;
+  }
+
+  /* si se sale de la foto, la acerca a la persona hasta que quede dentro */
+  function clampDentroDeLaFoto() {
+    var lr = lbl.getBoundingClientRect();
+    if (lr.width < 1) return;
+    var dx = 0, dy = 0;
+    if (lr.left < wR.left)        dx = wR.left - lr.left;
+    else if (lr.right > wR.right) dx = wR.right - lr.right;
+    if (lr.top < wR.top)           dy = wR.top - lr.top;
+    else if (lr.bottom > wR.bottom) dy = wR.bottom - lr.bottom;
+    if (!dx && !dy) return;
+    lbl.style.left = (parseFloat(lbl.style.left) + dx / wR.width  * 100) + '%';
+    lbl.style.top  = (parseFloat(lbl.style.top)  + dy / wR.height * 100) + '%';
+  }
+
+  /* candidatos: los 4 vértices extremos primero (arriba/abajo/izda/dcha del
+     contorno, el punto de "toque" más natural) y, si todos chocan con otro
+     contorno, el resto de vértices del contorno muestreados */
+  var topV    = pb.pts.reduce(function(a, p) { return p[1] < a[1] ? p : a; });
+  var bottomV = pb.pts.reduce(function(a, p) { return p[1] > a[1] ? p : a; });
+  var leftV   = pb.pts.reduce(function(a, p) { return p[0] < a[0] ? p : a; });
+  var rightV  = pb.pts.reduce(function(a, p) { return p[0] > a[0] ? p : a; });
+
+  var candidates = [
+    [topV[0],    topV[1],    'top'],
+    [bottomV[0], bottomV[1], 'bottom'],
+    [leftV[0],   leftV[1],   'left'],
+    [rightV[0],  rightV[1],  'right']
+  ];
+  var step = Math.max(1, Math.floor(pb.pts.length / 16));
+  for (var k = 0; k < pb.pts.length; k += step) {
+    var p = pb.pts[k];
+    candidates.push([p[0], p[1], sideFor(p[0], p[1])]);
+  }
+
+  var firstFree = null;
+  for (var i = 0; i < candidates.length; i++) {
+    setPosAt(candidates[i][0], candidates[i][1], candidates[i][2]);
+    if (!pisaOtroContorno()) {
+      if (firstFree === null) firstFree = i;
+      if (!fueraDeLaFoto()) return;
+    }
+  }
+  /* ningún candidato quedó libre de colisión Y dentro de la foto a la vez:
+     usar el primero libre de colisión (o el vértice superior si ninguno lo
+     estuvo) y acercarlo a la persona hasta que quede dentro de la foto */
+  if (firstFree !== null) {
+    setPosAt(candidates[firstFree][0], candidates[firstFree][1], candidates[firstFree][2]);
+  } else {
+    setPosAt(topV[0], topV[1], 'top');
+  }
+  clampDentroDeLaFoto();
+}
+
+window.addEventListener('load', function() {
+  var mode = getContourMode();
+
+  var sel = document.getElementById('contour-mode-select');
+  if (sel) {
+    var available = Array.prototype.map.call(sel.options, function (o) { return o.value; });
+    if (available.indexOf(mode) === -1) {
+      mode = available.indexOf('all') !== -1 ? 'all' : (available.indexOf('prota') !== -1 ? 'prota' : 'none');
+    }
+    sel.value = mode;
+    sel.addEventListener('change', function() {
+      setContourMode(sel.value);
+      applyContourMode(sel.value);
+    });
+  }
+
+  applyContourMode(mode);
+});
+</script>

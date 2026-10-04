@@ -14,10 +14,12 @@ class PhotosController < ApplicationController
   # GET /photos/new
   def new
     @photo = Photo.new
+    @people = Person.order(:surname, :surname2, :name)
   end
 
   # GET /photos/1/edit
   def edit
+    @people = Person.order(:surname, :surname2, :name)
   end
 
   # POST /photos or /photos.json
@@ -30,6 +32,7 @@ class PhotosController < ApplicationController
         format.html { redirect_to @photo, notice: "Photo was successfully created." }
         format.json { render :show, status: :created, location: @photo }
       else
+        @people = Person.order(:surname, :surname2, :name)
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @photo.errors, status: :unprocessable_entity }
       end
@@ -46,10 +49,11 @@ class PhotosController < ApplicationController
     end
 
     respond_to do |format|
-      if @photo.update(photo_params)
+      if @photo.update(photo_params.except(:image, :remove_image))
         format.html { redirect_to @photo, notice: "Photo was successfully updated." }
         format.json { render :show, status: :ok, location: @photo }
       else
+        @people = Person.order(:surname, :surname2, :name)
         format.html { render :edit, status: :unprocessable_entity }
         format.json { render json: @photo.errors, status: :unprocessable_entity }
       end
@@ -73,6 +77,9 @@ class PhotosController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def photo_params
-      params.require(:photo).permit(:title, :date, :dateAcc, :place, :owner, :content, :image, :remove_image)
+      params.require(:photo).permit(
+        :title, :date, :dateAcc, :place, :owner, :content, :image, :remove_image,
+        people_photos_attributes: [:id, :person_id, :x, :y, :width, :height, :points, :_destroy]
+      )
     end
 end

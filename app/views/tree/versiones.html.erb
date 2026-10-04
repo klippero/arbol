@@ -1,0 +1,24 @@
+<header>
+  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
+  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
+</header>
+<h1 class="page-title">Versiones</h1>
+
+<div class="versiones-lista">
+  <% @versiones.each do |v| %>
+    <div class="version-card<%= v[:actual] ? ' actual' : '' %>">
+      <div class="version-header">
+        <span class="version-numero"><%= v[:version] %></span>
+        <% if v[:actual] %>
+          <span class="version-badge">Actual</span>
+        <% end %>
+        <span class="version-fecha"><%= v[:fecha] %></span>
+      </div>
+      <ul class="version-cambios">
+        <% v[:cambios].each do |cambio| %>
+          <li><%= cambio %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>

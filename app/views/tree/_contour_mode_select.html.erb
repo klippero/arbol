@@ -1,0 +1,12 @@
+<%# locals: has_prota_contour:, has_other_contour:, highlight_name: (nilable) %>
+<% if has_prota_contour || has_other_contour %>
+  <select id="contour-mode-select" class="contour-mode-select">
+    <option value="none">No mostrar contornos</option>
+    <% if has_prota_contour %>
+      <option value="prota">Mostrar a <%= highlight_name %></option>
+    <% end %>
+    <% if has_other_contour %>
+      <option value="all">Mostrar todos</option>
+    <% end %>
+  </select>
+<% end %>

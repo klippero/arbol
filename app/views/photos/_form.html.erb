@@ -1,8 +1,10 @@
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
+
 <%= form_with(model: photo) do |form| %>
   <% if photo.errors.any? %>
     <div id="error_explanation">
       <h2><%= pluralize(photo.errors.count, "error") %> prohibited this photo from being saved:</h2>
-
       <ul>
         <% photo.errors.each do |error| %>
           <li><%= error.full_message %></li>
@@ -15,27 +17,22 @@
     <%= form.label :title %>
     <%= form.text_field :title %>
   </div>
-
   <div class="field">
     <%= form.label :date %>
     <%= form.date_field :date %>
   </div>
-
   <div class="field">
     <%= form.label :dateAcc %>
     <%= form.number_field :dateAcc %>
   </div>
-
   <div class="field">
     <%= form.label :place %>
     <%= form.text_field :place %>
   </div>
-
   <div class="field">
     <%= form.label :owner %>
     <%= form.text_field :owner %>
   </div>
-
   <div class="field">
     <%= form.label :content %>
     <%= form.text_area :content %>
@@ -44,18 +41,654 @@
   <div class="field">
     <%= form.label :image %>
     <% if photo.image.attached? %>
-      <div style="margin-bottom: 8px;">
-        <%= image_tag photo.image, style: 'max-width: 200px; max-height: 150px; display: block;' %>
-        <label style="font-size: 13px; color: #555;">
-          <%= form.check_box :remove_image %>
-          Eliminar imagen
+      <div style="margin-bottom:8px;">
+        <%= image_tag photo.image, style:'max-width:200px;max-height:150px;display:block;' %>
+        <label style="font-size:13px;color:#555;">
+          <%= form.check_box :remove_image %> Eliminar imagen
         </label>
       </div>
     <% end %>
-    <%= form.file_field :image, style: 'display: block;' %>
+    <%= form.file_field :image, id:'photo-file-input', style:'display:block;' %>
   </div>
 
-  <div class="actions">
-    <%= form.submit %>
+  <div id="form-photo-wrapper" style="display:<%= photo.image.attached? ? 'block' : 'none' %>;margin:8px 0 12px;">
+    <div style="position:relative;display:inline-block;max-width:100%;">
+      <img id="form-preview-img"
+           src="<%= photo.image.attached? ? url_for(photo.image) : '' %>"
+           style="display:block;max-width:min(600px,100%);max-height:400px;">
+      <svg id="form-preview-svg" viewBox="0 0 100 100" preserveAspectRatio="none"
+           style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;"></svg>
+    </div>
   </div>
+
+  <div class="field">
+    <label>Personas en la foto</label>
+
+    <div id="people-selected" style="margin:6px 0;min-height:24px;">
+      <% photo.people_photos.each_with_index do |pp, i| %>
+        <span class="person-chip" data-index="<%= i %>"
+              style="display:inline-flex;align-items:center;gap:4px;margin:2px 4px 2px 0;
+                     padding:3px 7px;background:#eee;border:1px solid #bbb;">
+          <input type="hidden" name="photo[people_photos_attributes][<%= i %>][id]"        value="<%= pp.id %>">
+          <input type="hidden" name="photo[people_photos_attributes][<%= i %>][person_id]" value="<%= pp.person_id %>">
+          <input type="hidden" name="photo[people_photos_attributes][<%= i %>][points]"    value="<%= pp.points %>">
+          <input type="hidden" name="photo[people_photos_attributes][<%= i %>][_destroy]"  value="0" class="destroy-flag">
+          <span class="chip-name" style="cursor:pointer;" onclick="togglePreviewContour(<%= i %>)"><%= pp.person.info_to_dropdown %></span>
+          <% if pp.display_points.present? %>
+            <span style="font-size:10px;color:#888;">⬚</span>
+          <% end %>
+          <a href="#" onclick="openBboxModal(<%= i %>);return false;"
+             style="text-decoration:none;font-size:13px;color:#555;" title="Editar contorno">✎</a>
+          <a href="#" onclick="removeChip(<%= i %>);return false;"
+             style="text-decoration:none;font-weight:bold;color:#900;" title="Quitar">×</a>
+        </span>
+      <% end %>
+    </div>
+
+    <div style="position:relative;display:inline-block;">
+      <input type="text" id="person-add-search" placeholder="Añadir persona..." autocomplete="off"
+             style="width:280px;padding:3px 6px;">
+      <div id="person-add-list"
+           style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #ccc;
+                  width:320px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.15);">
+      </div>
+    </div>
+  </div>
+
+  <div class="actions"><%= form.submit %></div>
 <% end %>
+
+<!-- ── MODAL ── -->
+<div id="bbox-modal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);
+            z-index:1000;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 10px;">
+  <div style="background:#fff;padding:16px;max-width:96vw;width:max-content;">
+
+    <p id="bbox-person-name" style="margin:0 0 4px;font-weight:bold;font-size:14px;"></p>
+    <p style="font-size:11px;color:#666;margin:0 0 8px;">
+      Dibuja libremente sobre la foto para marcar a la persona.
+      Pulsa <strong>Detectar personas</strong> para detectar automáticamente.
+    </p>
+
+    <div style="margin-bottom:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <button type="button" id="btn-detect"  onclick="detectFaces()">Detectar personas</button>
+      <button type="button" id="btn-clear"   onclick="clearCanvas()">Limpiar</button>
+      <span style="width:1px;height:20px;background:#ddd;display:inline-block;"></span>
+      <button type="button" id="btn-zoom-out" onclick="zoomOut()">－</button>
+      <span id="zoom-label" style="font-size:12px;color:#555;min-width:38px;text-align:center;display:inline-block;">100%</span>
+      <button type="button" id="btn-zoom-in"  onclick="zoomIn()">＋</button>
+      <button type="button" id="btn-zoom-reset" onclick="zoomReset()">Ajustar</button>
+      <span id="detect-status" style="font-size:11px;color:#888;"></span>
+    </div>
+
+    <div id="photo-viewport" style="overflow:auto;max-width:85vw;max-height:68vh;border:1px solid #ddd;">
+      <div id="photo-container"
+           style="position:relative;display:inline-block;cursor:crosshair;user-select:none;touch-action:none;">
+        <img id="photo-large" crossorigin="anonymous"
+             src="<%= photo.image.attached? ? url_for(photo.image) : '' %>"
+             style="display:block;max-width:85vw;max-height:68vh;"
+             draggable="false">
+        <canvas id="draw-canvas"
+                style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" id="btn-confirm-bbox">Guardar contorno</button>
+      <button type="button" id="btn-no-bbox">Sin contorno</button>
+      <button type="button" id="btn-cancel-bbox" style="margin-left:auto;color:#666;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ── DATOS ── */
+  var chipCount          = <%= photo.people_photos.count %>;
+  var pendingPerson      = null;
+  var editingIndex       = null;
+  var currentPoints      = [];     // [[x%,y%], ...]  confirmados
+  var rawPoints          = [];     // puntos durante el trazo actual
+  var isDrawing          = false;
+  var detectedFaces      = [];     // [{x,y,w,h} en %]
+  var modelLoaded        = false;
+  var activePreviewIndex = null;
+
+  var allPeople = [
+    <% @people.each do |person| %>
+      { id: <%= person.id %>, name: "<%= j person.info_to_dropdown %>" },
+    <% end %>
+  ];
+
+  /* pre-cargar BodyPix en background para que esté listo cuando se abra el modal */
+  var bodyPixNet = null;
+  if (typeof bodyPix !== 'undefined') {
+    bodyPix.load({ architecture: 'MobileNetV1', outputStride: 16, multiplier: 0.75, quantBytes: 2 })
+      .then(function (net) { bodyPixNet = net; modelLoaded = true; })
+      .catch(function () {});
+  }
+
+  /* ── DOM ── */
+  var modal       = document.getElementById('bbox-modal');
+  var photoImg    = document.getElementById('photo-large');
+  var canvas      = document.getElementById('draw-canvas');
+  var ctx         = canvas.getContext('2d');
+  var nameLabel   = document.getElementById('bbox-person-name');
+  var statusEl    = document.getElementById('detect-status');
+  var viewport    = document.getElementById('photo-viewport');
+  var zoomLabel   = document.getElementById('zoom-label');
+
+  /* ─────────────────── ZOOM ─────────────────── */
+  var ZOOM_MIN  = 1;
+  var ZOOM_MAX  = 4;
+  var ZOOM_STEP = 0.25;
+  var zoomLevel = 1;
+  var baseWidth = 0, baseHeight = 0;
+
+  function captureBaseSize() {
+    photoImg.style.maxWidth  = '';
+    photoImg.style.maxHeight = '';
+    photoImg.style.width  = '';
+    photoImg.style.height = '';
+    baseWidth  = photoImg.offsetWidth;
+    baseHeight = photoImg.offsetHeight;
+    /* fijar el tamaño de "ajuste" explícitamente y anular max-width/max-height,
+       para que al hacer zoom width/height escalen igual y no se recorten por separado */
+    photoImg.style.maxWidth  = 'none';
+    photoImg.style.maxHeight = 'none';
+    photoImg.style.width  = baseWidth  + 'px';
+    photoImg.style.height = baseHeight + 'px';
+  }
+
+  function applyZoom(newZoom, focalClientX, focalClientY) {
+    newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+    if (!baseWidth || !baseHeight) return;
+
+    var rect   = viewport.getBoundingClientRect();
+    var oldW   = photoImg.offsetWidth  || baseWidth;
+    var oldH   = photoImg.offsetHeight || baseHeight;
+    var fx     = (focalClientX != null) ? focalClientX - rect.left : viewport.clientWidth  / 2;
+    var fy     = (focalClientY != null) ? focalClientY - rect.top  : viewport.clientHeight / 2;
+    var fracX  = (viewport.scrollLeft + fx) / oldW;
+    var fracY  = (viewport.scrollTop  + fy) / oldH;
+
+    zoomLevel = newZoom;
+    photoImg.style.width  = (baseWidth  * zoomLevel) + 'px';
+    photoImg.style.height = (baseHeight * zoomLevel) + 'px';
+    resizeCanvas();
+    redrawCanvas();
+
+    viewport.scrollLeft = fracX * photoImg.offsetWidth  - fx;
+    viewport.scrollTop  = fracY * photoImg.offsetHeight - fy;
+
+    zoomLabel.textContent = Math.round(zoomLevel * 100) + '%';
+  }
+
+  window.zoomIn    = function () { applyZoom(zoomLevel + ZOOM_STEP); };
+  window.zoomOut   = function () { applyZoom(zoomLevel - ZOOM_STEP); };
+  window.zoomReset = function () { applyZoom(1); };
+
+  viewport.addEventListener('wheel', function (e) {
+    if (modal.style.display === 'none') return;
+    /* sólo zoom con Ctrl/Cmd+rueda o gesto de pellizco (el navegador marca ctrlKey);
+       la rueda o el scroll de dos dedos normal desplaza la foto de forma nativa */
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    applyZoom(zoomLevel + (e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP), e.clientX, e.clientY);
+  }, { passive: false });
+
+  /* ─────────────────── CHIPS ─────────────────── */
+  function selectedPersonIds() {
+    return Array.from(
+      document.querySelectorAll('#people-selected input[name$="[person_id]"]')
+    ).filter(function (i) {
+      return i.closest('.person-chip').querySelector('.destroy-flag').value !== '1';
+    }).map(function (i) { return parseInt(i.value); });
+  }
+
+  function chipPointsInput(index) {
+    var chip = document.querySelector('[data-index="' + index + '"]');
+    return chip ? chip.querySelector('input[name$="[points]"]') : null;
+  }
+
+  window.removeChip = function (index) {
+    var chip = document.querySelector('[data-index="' + index + '"]');
+    if (!chip) return;
+    var flag = chip.querySelector('.destroy-flag');
+    if (flag) { flag.value = '1'; chip.style.display = 'none'; }
+    else chip.remove();
+  };
+
+  function addChip(person, index, pts) {
+    var sel = document.getElementById('people-selected');
+    var chip = document.createElement('span');
+    chip.className = 'person-chip';
+    chip.dataset.index = index;
+    chip.style.cssText =
+      'display:inline-flex;align-items:center;gap:4px;margin:2px 4px 2px 0;' +
+      'padding:3px 7px;background:#eee;border:1px solid #bbb;';
+
+    var hasPts = pts && pts.length > 0;
+    chip.innerHTML =
+      '<input type="hidden" name="photo[people_photos_attributes][' + index + '][person_id]" value="' + person.id + '">' +
+      '<input type="hidden" name="photo[people_photos_attributes][' + index + '][points]"    value="' + (hasPts ? JSON.stringify(pts) : '') + '">' +
+      '<input type="hidden" name="photo[people_photos_attributes][' + index + '][_destroy]"  value="0" class="destroy-flag">' +
+      '<span class="chip-name" style="cursor:pointer;" onclick="togglePreviewContour(' + index + ')">' + person.name + '</span>' +
+      (hasPts ? '<span style="font-size:10px;color:#888;">⬚</span>' : '') +
+      '<a href="#" onclick="openBboxModal(' + index + ');return false;" style="text-decoration:none;font-size:13px;color:#555;" title="Editar contorno">✎</a>' +
+      '<a href="#" onclick="removeChip(' + index + ');return false;" style="text-decoration:none;font-weight:bold;color:#900;" title="Quitar">×</a>';
+
+    sel.appendChild(chip);
+  }
+
+  function drawPreviewPoly(pts, index) {
+    var svg = document.getElementById('form-preview-svg');
+    if (!svg) return;
+    var ex = svg.querySelector('.preview-active-poly');
+    if (ex) ex.remove();
+    if (!pts || !pts.length) { activePreviewIndex = null; return; }
+    var poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    poly.classList.add('preview-active-poly');
+    poly.setAttribute('points', pts.map(function(p){ return p[0]+','+p[1]; }).join(' '));
+    poly.setAttribute('fill', 'rgba(255,220,0,0.15)');
+    poly.setAttribute('stroke', '#ffcc00');
+    poly.setAttribute('stroke-width', '1.5');
+    poly.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.appendChild(poly);
+    activePreviewIndex = index;
+  }
+
+  window.togglePreviewContour = function (index) {
+    if (activePreviewIndex === index) {
+      var svg = document.getElementById('form-preview-svg');
+      if (svg) { var ex = svg.querySelector('.preview-active-poly'); if (ex) ex.remove(); }
+      activePreviewIndex = null;
+      return;
+    }
+    var inp = chipPointsInput(index);
+    if (!inp || !inp.value) { activePreviewIndex = null; return; }
+    try { drawPreviewPoly(JSON.parse(inp.value), index); } catch(e) {}
+  };
+
+  /* ─────────────────── BÚSQUEDA ─────────────────── */
+  var searchInput = document.getElementById('person-add-search');
+  var dropdown    = document.getElementById('person-add-list');
+
+  searchInput.addEventListener('input', function () {
+    var q = this.value.toLowerCase().trim();
+    if (!q) { dropdown.style.display = 'none'; return; }
+    var cur = selectedPersonIds();
+    var matches = allPeople.filter(function (p) {
+      return !cur.includes(p.id) && p.name.toLowerCase().includes(q);
+    }).slice(0, 15);
+    if (!matches.length) { dropdown.style.display = 'none'; return; }
+    dropdown.innerHTML = matches.map(function (p) {
+      return '<div style="padding:5px 8px;cursor:pointer;"' +
+             ' onmousedown="pickPerson(' + p.id + ');return false;"' +
+             ' onmouseover="this.style.background=\'#f0f0f0\'"' +
+             ' onmouseout="this.style.background=\'\'">' + p.name + '</div>';
+    }).join('');
+    dropdown.style.display = 'block';
+  });
+  searchInput.addEventListener('blur', function () {
+    setTimeout(function () { dropdown.style.display = 'none'; }, 200);
+  });
+
+  window.pickPerson = function (id) {
+    var person = allPeople.find(function (p) { return p.id === id; });
+    if (!person) return;
+    searchInput.value = '';
+    dropdown.style.display = 'none';
+    pendingPerson = { index: chipCount++, person: person };
+    openBboxModal(null, person.name);
+  };
+
+  /* ─────────────────── MODAL ─────────────────── */
+  window.openBboxModal = function (chipIndex, nameOverride) {
+    editingIndex  = chipIndex;
+    currentPoints = [];
+    detectedFaces = [];
+    statusEl.textContent = '';
+
+    if (nameOverride) {
+      nameLabel.textContent = nameOverride;
+    } else {
+      var chip = document.querySelector('[data-index="' + chipIndex + '"]');
+      nameLabel.textContent = chip ? chip.querySelector('.chip-name').textContent.trim() : '';
+      var inp = chipPointsInput(chipIndex);
+      if (inp && inp.value) {
+        try { currentPoints = JSON.parse(inp.value); } catch(e) {}
+      }
+    }
+
+    modal.style.display = 'flex';
+    requestAnimationFrame(function () {
+      captureBaseSize();
+      zoomLevel = 1;
+      zoomLabel.textContent = '100%';
+      resizeCanvas();
+      redrawCanvas();
+      /* esperar a que el modal esté completamente renderizado antes de detectar */
+      setTimeout(detectFaces, 300);
+    });
+  };
+
+  function closeModal() {
+    modal.style.display = 'none';
+    pendingPerson = null;
+    editingIndex  = null;
+    currentPoints = [];
+    rawPoints     = [];
+    isDrawing     = false;
+    detectedFaces = [];
+    spaceHeld     = false;
+    isPanning     = false;
+    container.style.cursor = 'crosshair';
+    clearCanvas();
+  }
+
+  document.getElementById('btn-confirm-bbox').addEventListener('click', function () {
+    applyPoints(currentPoints.length > 0 ? currentPoints : null);
+  });
+  document.getElementById('btn-no-bbox').addEventListener('click', function () {
+    applyPoints(null);
+  });
+  document.getElementById('btn-cancel-bbox').addEventListener('click', function () {
+    if (pendingPerson) chipCount--;
+    pendingPerson = null;
+    closeModal();
+  });
+
+  function applyPoints(pts) {
+    var savedIndex = editingIndex;
+    if (pendingPerson) {
+      addChip(pendingPerson.person, pendingPerson.index, pts);
+    } else if (editingIndex !== null) {
+      var inp = chipPointsInput(editingIndex);
+      if (inp) inp.value = pts ? JSON.stringify(pts) : '';
+      // update badge
+      var chip = document.querySelector('[data-index="' + editingIndex + '"]');
+      if (chip) {
+        var badge = chip.querySelector('span[style*="10px"]');
+        if (pts && pts.length) {
+          if (!badge) {
+            var nameSpan = chip.querySelector('.chip-name');
+            var b = document.createElement('span');
+            b.style.cssText = 'font-size:10px;color:#888;';
+            b.textContent = '⬚';
+            nameSpan.after(b);
+          }
+        } else if (badge) {
+          badge.remove();
+        }
+      }
+    }
+    // refresh preview if the edited chip was being shown
+    if (savedIndex !== null && activePreviewIndex === savedIndex) {
+      activePreviewIndex = null;
+      drawPreviewPoly(pts && pts.length ? pts : null, savedIndex);
+    }
+    closeModal();
+  }
+
+  /* ─────────────────── CANVAS ─────────────────── */
+  function resizeCanvas() {
+    canvas.width  = photoImg.offsetWidth;
+    canvas.height = photoImg.offsetHeight;
+    canvas.style.width  = photoImg.offsetWidth  + 'px';
+    canvas.style.height = photoImg.offsetHeight + 'px';
+  }
+
+  function pxToPercent(x, y) {
+    return [x / canvas.width * 100, y / canvas.height * 100];
+  }
+
+  function percentToPx(x, y) {
+    return [x / 100 * canvas.width, y / 100 * canvas.height];
+  }
+
+  function simplify(pts, tol) {
+    // Keep a point only if it's at least `tol` canvas-px from the previous kept point
+    if (pts.length < 3) return pts;
+    var res = [pts[0]];
+    for (var i = 1; i < pts.length; i++) {
+      var a = res[res.length - 1], b = pts[i];
+      var dx = (b[0]-a[0])/100*canvas.width, dy = (b[1]-a[1])/100*canvas.height;
+      if (Math.sqrt(dx*dx+dy*dy) >= tol) res.push(b);
+    }
+    return res;
+  }
+
+  window.clearCanvas = function () {
+    currentPoints = [];
+    rawPoints     = [];
+    if (!detectedFaces.length) statusEl.textContent = '';
+    redrawCanvas();
+  };
+
+  function redrawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // contornos de personas detectadas (amarillo)
+    detectedFaces.forEach(function (poly, idx) {
+      if (!poly || poly.length < 3) return;
+      var pxPts = poly.map(function (p) { return percentToPx(p[0], p[1]); });
+      ctx.beginPath();
+      ctx.moveTo(pxPts[0][0], pxPts[0][1]);
+      for (var i = 1; i < pxPts.length; i++) ctx.lineTo(pxPts[i][0], pxPts[i][1]);
+      ctx.closePath();
+      ctx.strokeStyle = '#e8a000';
+      ctx.lineWidth   = 2;
+      ctx.setLineDash([5, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(232,160,0,.08)';
+      ctx.fill();
+      // número en el centroide
+      var cx = pxPts.reduce(function (a, p) { return a + p[0]; }, 0) / pxPts.length;
+      var cy = pxPts.reduce(function (a, p) { return a + p[1]; }, 0) / pxPts.length;
+      ctx.fillStyle = '#e8a000';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText((idx + 1).toString(), cx - 4, cy + 5);
+    });
+
+    // current selection (red polygon)
+    var pts = isDrawing ? rawPoints.map(function(p){ return percentToPx(p[0],p[1]); })
+                        : currentPoints.map(function(p){ return percentToPx(p[0],p[1]); });
+    if (pts.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      if (!isDrawing) ctx.closePath();
+      ctx.strokeStyle = '#e00';
+      ctx.lineWidth   = 2;
+      ctx.setLineDash([]);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(220,0,0,.12)';
+      ctx.fill();
+    }
+  }
+
+  /* ── drawing events (pointer so it works on touch too) ── */
+  var container = document.getElementById('photo-container');
+
+  function canvasPoint(e) {
+    var r = canvas.getBoundingClientRect();
+    var cx = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left;
+    var cy = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top;
+    return pxToPercent(
+      Math.max(0, Math.min(cx, canvas.width)),
+      Math.max(0, Math.min(cy, canvas.height))
+    );
+  }
+
+  var mouseDownPos   = null;
+  var mouseMoveCount = 0;
+
+  /* ── pan (mover la foto): barra espaciadora + arrastre, o botón central del ratón ── */
+  var spaceHeld  = false;
+  var isPanning  = false;
+  var panStart   = null;
+
+  document.addEventListener('keydown', function (e) {
+    if (modal.style.display === 'none' || e.code !== 'Space' || spaceHeld) return;
+    spaceHeld = true;
+    if (!isDrawing) container.style.cursor = 'grab';
+    e.preventDefault();
+  });
+  document.addEventListener('keyup', function (e) {
+    if (e.code !== 'Space') return;
+    spaceHeld = false;
+    if (!isPanning) container.style.cursor = 'crosshair';
+  });
+
+  container.addEventListener('mousedown', function (e) {
+    if (modal.style.display === 'none') return;
+    if (e.button === 1 || (e.button === 0 && spaceHeld)) {
+      isPanning = true;
+      panStart  = { x: e.clientX, y: e.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+      container.style.cursor = 'grabbing';
+      e.preventDefault();
+      return;
+    }
+    mouseDownPos   = canvasPoint(e);
+    mouseMoveCount = 0;
+    isDrawing      = true;
+    rawPoints      = [mouseDownPos];
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function (e) {
+    if (isPanning) {
+      viewport.scrollLeft = panStart.left - (e.clientX - panStart.x);
+      viewport.scrollTop  = panStart.top  - (e.clientY - panStart.y);
+      return;
+    }
+    if (!isDrawing) return;
+    mouseMoveCount++;
+    rawPoints.push(canvasPoint(e));
+    redrawCanvas();
+  });
+  document.addEventListener('mouseup', function () {
+    if (isPanning) {
+      isPanning = false;
+      container.style.cursor = spaceHeld ? 'grab' : 'crosshair';
+      return;
+    }
+    if (!isDrawing) return;
+    isDrawing = false;
+
+    if (mouseMoveCount < 5 && detectedFaces.length > 0) {
+      /* click sobre la foto → seleccionar la persona más cercana al click */
+      var best = null, bestDist = Infinity;
+      detectedFaces.forEach(function (poly, idx) {
+        if (!poly || !poly.length) return;
+        var cx = poly.reduce(function (a, p) { return a + p[0]; }, 0) / poly.length;
+        var cy = poly.reduce(function (a, p) { return a + p[1]; }, 0) / poly.length;
+        var d  = Math.pow(mouseDownPos[0] - cx, 2) + Math.pow(mouseDownPos[1] - cy, 2);
+        if (d < bestDist) { bestDist = d; best = idx; }
+      });
+      rawPoints = [];
+      if (best !== null) { selectDetectedFace(best); return; }
+    }
+
+    currentPoints = simplify(rawPoints, 4);
+    rawPoints     = [];
+    redrawCanvas();
+  });
+
+  /* ─────────────────── DETECCIÓN DE PERSONAS (BodyPix) ─────────────────── */
+  function segmentationToPolygon(seg) {
+    var data  = seg.data;
+    var maskW = seg.width;
+    var maskH = seg.height;
+    /* escaneo de filas: borde izquierdo y derecho de la silueta */
+    var step     = Math.max(1, Math.floor(maskH / 80));
+    var leftPts  = [];
+    var rightPts = [];
+    for (var y = 0; y < maskH; y += step) {
+      var left = -1, right = -1;
+      for (var x = 0; x < maskW; x++) {
+        if (data[y * maskW + x] === 1) { if (left === -1) left = x; right = x; }
+      }
+      if (left !== -1) {
+        leftPts.push( [left  / maskW * 100, y / maskH * 100]);
+        rightPts.push([right / maskW * 100, y / maskH * 100]);
+      }
+    }
+    if (leftPts.length < 3) return null;
+    /* polígono: bajada por el lado derecho, subida por el lado izquierdo */
+    return rightPts.concat(leftPts.slice().reverse());
+  }
+
+  window.detectFaces = function () {
+    if (typeof bodyPix === 'undefined') {
+      statusEl.textContent = 'Modelo no disponible.';
+      return;
+    }
+    if (!photoImg.offsetWidth || !photoImg.naturalWidth) {
+      statusEl.textContent = 'Imagen no disponible.';
+      return;
+    }
+    var btn = document.getElementById('btn-detect');
+    btn.disabled = true;
+    statusEl.textContent = 'Cargando modelo…';
+
+    var loadPromise = bodyPixNet
+      ? Promise.resolve(bodyPixNet)
+      : bodyPix.load({ architecture: 'MobileNetV1', outputStride: 16, multiplier: 0.75, quantBytes: 2 })
+               .then(function (net) { bodyPixNet = net; modelLoaded = true; return net; });
+
+    loadPromise
+      .then(function (net) {
+        statusEl.textContent = 'Segmentando personas…';
+        return net.segmentMultiPerson(photoImg, {
+          flipHorizontal:       false,
+          internalResolution:   'medium',
+          segmentationThreshold: 0.6,
+          maxDetections:         10,
+          scoreThreshold:        0.2
+        });
+      })
+      .then(function (segs) {
+        btn.disabled = false;
+        var polygons = segs.map(segmentationToPolygon).filter(Boolean);
+        if (!polygons.length) {
+          statusEl.textContent = 'No se detectaron personas.';
+          return;
+        }
+        detectedFaces = polygons;
+        statusEl.textContent = polygons.length + ' persona(s). Haz click sobre la que corresponda.';
+        redrawCanvas();
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        statusEl.textContent = 'Error: ' + err.message;
+        console.error('body-pix:', err);
+      });
+  };
+
+  function selectDetectedFace(idx) {
+    currentPoints = detectedFaces[idx].slice();
+    statusEl.textContent = 'Persona ' + (idx + 1) + ' seleccionada. Puedes ajustar dibujando encima.';
+    redrawCanvas();
+  }
+
+  /* ─────────────────── PREVIEW NUEVA FOTO ─────────────────── */
+  var fileInput = document.getElementById('photo-file-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        photoImg.src = ev.target.result;
+        var fpImg  = document.getElementById('form-preview-img');
+        var fpWrap = document.getElementById('form-photo-wrapper');
+        if (fpImg)  fpImg.src = ev.target.result;
+        if (fpWrap) fpWrap.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+})();
+</script>

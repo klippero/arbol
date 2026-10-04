@@ -38,9 +38,9 @@
                   <% dm = person.nacimiento_dia_mes_corto %>
                   <% edad_en_proximo = next_date ? person.edad_en_fecha(next_date) : nil %>
                   <% if person.fallecio? %>
-                    <%= dm %> <%= person.fullname %><% if edad_en_proximo %> cumpliría <%= edad_en_proximo %> años<% end %>
+                    <%= dm %> <%= person.fullname %> cumpliría<%= edad_en_proximo ? " #{edad_en_proximo} años" : " años" %>
                   <% else %>
-                    <%= dm %> <%= person.fullname %><% if edad_en_proximo %> <%= edad_en_proximo %> cumpleaños<% end %>
+                    <%= dm %> <%= person.fullname %><%= edad_en_proximo ? " #{edad_en_proximo} cumpleaños" : " cumpleaños" %>
                   <% end %>
                 <% end %>
               </span>
@@ -50,7 +50,7 @@
             <% if next_date %>
               <%= next_date.strftime("%d/%m/%Y") %>
               <% if days %>
-                <span class="fechas-lista-dias"><%= days %> días</span>
+                <span class="fechas-lista-dias"><%= days == 0 ? "hoy" : (days == 1 ? "mañana" : "#{days} días") %></span>
               <% end %>
             <% else %>
               —

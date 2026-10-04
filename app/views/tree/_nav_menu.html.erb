@@ -7,7 +7,7 @@
     </div>
     <div class="nav-menu-logout">
       <%= link_to "Salir", destroy_user_session_path, data: { turbo_method: :delete } %>
-      <span class="nav-menu-version">v2.0</span>
+      <%= link_to "v3.0", tree_versiones_path, class: "nav-menu-version" %>
     </div>
   </div>
 </div>

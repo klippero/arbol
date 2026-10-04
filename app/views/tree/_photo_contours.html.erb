@@ -1,0 +1,103 @@
+<%# locals: photo:, highlight_person: (nilable Person), image_link_path: (nilable path) %>
+<% pp_by_person = photo.people_photos.index_by(&:person_id) %>
+<% if photo.image.attached? %>
+  <% pts_highlight = highlight_person && pp_by_person[highlight_person.id]&.display_points %>
+  <% any_contour = pts_highlight&.any? || photo.people_photos.any? { |pp| pp.display_points&.any? } %>
+  <% exp_poly = lambda { |pts, d|
+       n = pts.length
+       next pts if n < 3
+       # winding: shoelace signed area (>0 = CW in SVG y-down coords)
+       area2 = 0.0
+       n.times { |i| j = (i+1)%n; area2 += pts[i][0]*pts[j][1] - pts[j][0]*pts[i][1] }
+       s = area2 >= 0 ? 1.0 : -1.0   # 1 = CW → right-perp is outward
+       res = []
+       n.times { |i|
+         p0, p1, p2 = pts[(i-1+n)%n], pts[i], pts[(i+1)%n]
+         ax, ay = p1[0]-p0[0], p1[1]-p0[1]; la = Math.sqrt(ax*ax+ay*ay)
+         bx, by = p2[0]-p1[0], p2[1]-p1[1]; lb = Math.sqrt(bx*bx+by*by)
+         if la < 1e-10 || lb < 1e-10; res << p1; next; end
+         ax /= la; ay /= la; bx /= lb; by /= lb
+         # outward normals (right-perp for CW, left-perp for CCW)
+         n1x, n1y = s*ay, -s*ax
+         n2x, n2y = s*by, -s*bx
+         # miter offset: move d units perpendicular to each edge
+         denom = 1.0 + n1x*n2x + n1y*n2y
+         sc = denom.abs > 0.15 ? [d / denom, d * 4.0].min : d
+         res << [p1[0] + (n1x+n2x)*sc, p1[1] + (n1y+n2y)*sc]
+       }
+       res
+     } %>
+  <div style="position:relative; display:inline-block; max-width:100%;" data-photo-wrap="<%= photo.id %>">
+    <% if image_link_path %>
+      <%= link_to image_link_path do %>
+        <%= image_tag photo.image, style:'display:block;max-width:100%;max-height:100%;' %>
+      <% end %>
+    <% else %>
+      <%= image_tag photo.image, style:'display:block;max-width:100%;max-height:100%;' %>
+    <% end %>
+
+    <%# SVG unificado: capa oscura con máscara SVG (los huecos negros son aditivos, el solapamiento no re-oscurece) %>
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none"
+         style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;">
+      <defs>
+        <mask id="dark-mask-<%= photo.id %>" x="0" y="0" width="100" height="100" maskUnits="userSpaceOnUse">
+          <rect width="100" height="100" fill="white"/>
+          <% photo.people_photos.each do |pp| %>
+            <% next unless pp.display_points&.any? %>
+            <polygon class="mask-hole"
+                     data-photo-id="<%= photo.id %>"
+                     data-person-id="<%= pp.person_id %>"
+                     points="<%= exp_poly.call(pp.display_points, 2.0).map { |pt| "#{pt[0]},#{pt[1]}" }.join(' ') %>" fill="black"/>
+          <% end %>
+        </mask>
+      </defs>
+      <rect id="dark-rect-<%= photo.id %>"
+            width="100" height="100"
+            fill="rgba(0,0,0,0.45)"
+            mask="url(#dark-mask-<%= photo.id %>)"
+            data-has-prota="<%= pts_highlight&.any? ? '1' : '0' %>"
+            data-has-any="<%= any_contour ? '1' : '0' %>"
+            style="display:<%= any_contour ? 'block' : 'none' %>;"/>
+      <% photo.people_photos.each do |pp| %>
+        <% poly_pts = pp.display_points %>
+        <% if poly_pts&.any? %>
+          <polygon class="hover-poly"
+                   data-photo-id="<%= photo.id %>"
+                   data-person-id="<%= pp.person_id %>"
+                   points="<%= exp_poly.call(poly_pts, 2.0).map { |pt| "#{pt[0]},#{pt[1]}" }.join(' ') %>"
+                   fill="none" stroke="none"/>
+        <% end %>
+      <% end %>
+    </svg>
+    <% photo.people_photos.each do |pp| %>
+      <% next unless pp.display_points&.any? %>
+      <div class="contour-label<%= highlight_person && pp.person_id == highlight_person.id ? ' contour-label-prota' : '' %>"
+           data-photo-id="<%= photo.id %>"
+           data-person-id="<%= pp.person_id %>"
+           data-person-name="<%= j pp.person.name %>"
+           style="display:none;"></div>
+    <% end %>
+  </div>
+<% end %>
+<div class="divEnLaFoto">
+<ul class="enLaFoto" id="people-list-<%= photo.id %>">
+  <% people_sorted = photo.people.sort_by { |person|
+       pts = pp_by_person[person.id]&.display_points
+       pts&.any? ? [0, pts.map { |pt| pt[0] }.min] : [1, 0]
+     } %>
+  <% people_sorted.each do |person| %>
+    <% age    = person.birthdate.nil? ? '' : IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) %>
+    <% pp_p   = pp_by_person[person.id] %>
+    <% has_c  = pp_p&.display_points&.any? %>
+    <% li_class = [(highlight_person && person == highlight_person ? 'prota' : nil), (has_c ? 'tieneContorno' : 'sinContorno')].compact.join(' ') %>
+    <% relacion = highlight_person ? highlight_person.relacionCon(person).to_s : '' %>
+    <a href="/tree/persona?p=<%= person.id %>">
+      <li class="<%= li_class %>" data-person-id="<%= person.id %>"><%= person.name %><%= age.blank? ? '' : ' (' + age + ')' %>
+        <% if relacion.present? %>
+          <%= age.blank? ? "(#{relacion})" : relacion %>
+        <% end %>
+      </li>
+    </a>
+  <% end %>
+</ul>
+</div>
