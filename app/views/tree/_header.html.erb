@@ -1,0 +1,11 @@
+<header>
+  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
+  <div class="header-right">
+    <% if impersonando? %>
+      <%= link_to effective_person.name, tree_persona_path(p: effective_person.id) %>
+    <% else %>
+      <%= current_user.person ? link_to(current_user.display_name, tree_persona_path(p: current_user.person_id)) : current_user.display_name %>
+    <% end %>
+    <%= render 'nav_menu' %>
+  </div>
+</header>

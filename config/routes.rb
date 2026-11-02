@@ -1,11 +1,16 @@
 Rails.application.routes.draw do
   devise_for :users
+  get  'users/complete_profile', to: 'users#complete_profile', as: :complete_profile
+  patch 'users/complete_profile', to: 'users#update_profile'
   get 'tree/familia'
   get 'tree/persona'
   get 'tree/foto', to: 'tree#foto', as: :tree_foto
   get 'tree/fechas', to: 'tree#fechas', as: :tree_fechas
   get 'tree/personas_buscar', to: 'tree#personas_buscar', as: :tree_personas_buscar
   get 'tree/apellidos', to: 'tree#apellidos', as: :tree_apellidos
+  get 'tree/parentesco', to: 'tree#parentesco', as: :tree_parentesco
+  get 'tree/arbol', to: 'tree#arbol', as: :tree_arbol
+  get 'tree/mis_fotos', to: 'tree#mis_fotos', as: :tree_mis_fotos
   get 'tree/versiones', to: 'tree#versiones', as: :tree_versiones
   get 'tree/cumples'
   get 'tree/new'

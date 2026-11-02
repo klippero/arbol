@@ -1,0 +1,90 @@
+<% content_for :title, "Parentesco con #{@p.fullname}" %>
+<%= render 'header' %>
+<h1 class="page-title">Parentesco con <%= @p.fullname %></h1>
+
+<div class="apellidos-chain-wrap">
+  <% if @camino.nil? %>
+    <p>No se ha encontrado relación de parentesco.</p>
+  <% else %>
+    <div class="parentesco-tree" id="parentesco-tree">
+      <% @filas.each do |nivel, unidades| %>
+        <div class="parentesco-nivel">
+          <% unidades.each do |unidad| %>
+            <div id="parentesco-<%= unidad[:dom_id] %>"
+                 class="parentesco-unidad<%= unidad[:personas].size > 1 ? ' pareja' : '' %>"
+                 <% if unidad[:prev_dom_id] %>data-prev="<%= unidad[:prev_dom_id] %>" data-tipo="<%= unidad[:prev_tipo] %>" data-prev-persona="<%= unidad[:prev_persona_id] %>" data-destino-persona="<%= unidad[:destino_persona_id] %>"<% end %>>
+              <% unidad[:personas].each do |paso| %>
+                <% es_propio = paso[:person] == effective_person || paso[:person] == @p %>
+                <div class="parentesco-nodo<%= es_propio ? ' propio' : '' %>" id="parentesco-persona-<%= paso[:person].id %>">
+                  <%= link_to paso[:person].fullname, tree_persona_path(p: paso[:person].id) %>
+                </div>
+              <% end %>
+            </div>
+            <% if unidad[:relacion_lateral] %>
+              <div class="parentesco-relacion-lateral"><%= unidad[:relacion_lateral] %></div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+window.addEventListener('load', function () {
+  var tree = document.getElementById('parentesco-tree');
+  if (!tree) return;
+
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'parentesco-svg');
+
+  var defs = document.createElementNS(svgNS, 'defs');
+  [['politica', '#cc8800'], ['sanguinea', '#999']].forEach(function (entry) {
+    var marker = document.createElementNS(svgNS, 'marker');
+    marker.setAttribute('id', 'parentesco-flecha-' + entry[0]);
+    marker.setAttribute('viewBox', '0 0 10 10');
+    marker.setAttribute('refX', '8');
+    marker.setAttribute('refY', '5');
+    marker.setAttribute('markerWidth', '6');
+    marker.setAttribute('markerHeight', '6');
+    marker.setAttribute('orient', 'auto-start-reverse');
+    var path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', 'M0,0 L10,5 L0,10 z');
+    path.setAttribute('fill', entry[1]);
+    marker.appendChild(path);
+    defs.appendChild(marker);
+  });
+  svg.appendChild(defs);
+  tree.insertBefore(svg, tree.firstChild);
+
+  var treeRect = tree.getBoundingClientRect();
+
+  document.querySelectorAll('[data-prev]').forEach(function (nodo) {
+    var prevNodo = document.getElementById('parentesco-' + nodo.dataset.prev);
+    if (!prevNodo) return;
+
+    var origenNodo = (nodo.dataset.prevPersona && document.getElementById('parentesco-persona-' + nodo.dataset.prevPersona)) || prevNodo;
+    var destinoNodo = (nodo.dataset.destinoPersona && document.getElementById('parentesco-persona-' + nodo.dataset.destinoPersona)) || nodo;
+
+    var a = origenNodo.getBoundingClientRect();
+    var b = destinoNodo.getBoundingClientRect();
+    var x1 = a.left + a.width / 2 - treeRect.left;
+    var y1 = a.top + a.height / 2 - treeRect.top;
+    var x2 = b.left + b.width / 2 - treeRect.left;
+    var y2 = b.top + b.height / 2 - treeRect.top;
+
+    var politica = nodo.dataset.tipo === 'politica';
+    var linea = document.createElementNS(svgNS, 'line');
+    linea.setAttribute('x1', x1);
+    linea.setAttribute('y1', y1);
+    linea.setAttribute('x2', x2);
+    linea.setAttribute('y2', y2);
+    linea.setAttribute('stroke', politica ? '#cc8800' : '#999');
+    linea.setAttribute('stroke-width', '2');
+    if (politica) linea.setAttribute('stroke-dasharray', '5,4');
+    linea.setAttribute('marker-end', 'url(#parentesco-flecha-' + (politica ? 'politica' : 'sanguinea') + ')');
+    svg.appendChild(linea);
+  });
+});
+</script>

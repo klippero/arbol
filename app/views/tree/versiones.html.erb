@@ -1,7 +1,4 @@
-<header>
-  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
-  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
-</header>
+<%= render 'header' %>
 <h1 class="page-title">Versiones</h1>
 
 <div class="versiones-lista">

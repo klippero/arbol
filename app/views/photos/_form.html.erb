@@ -30,7 +30,12 @@
     <%= form.text_field :place %>
   </div>
   <div class="field">
-    <%= form.label :owner %>
+    <%= form.label :owner_person_id, "Persona propietaria de la foto" %>
+    <%= render "users/person_picker", f: form, field: :owner_person_id,
+          current_person: photo.owner_person, include_fallecidos: true %>
+  </div>
+  <div class="field">
+    <%= form.label :owner, "Propietario (antiguo, en desuso)" %>
     <%= form.text_field :owner %>
   </div>
   <div class="field">
@@ -73,7 +78,7 @@
           <input type="hidden" name="photo[people_photos_attributes][<%= i %>][person_id]" value="<%= pp.person_id %>">
           <input type="hidden" name="photo[people_photos_attributes][<%= i %>][points]"    value="<%= pp.points %>">
           <input type="hidden" name="photo[people_photos_attributes][<%= i %>][_destroy]"  value="0" class="destroy-flag">
-          <span class="chip-name" style="cursor:pointer;" onclick="togglePreviewContour(<%= i %>)"><%= pp.person.info_to_dropdown %></span>
+          <span class="chip-name" style="cursor:pointer;" onclick="togglePreviewContour(<%= i %>)"><%= pp.person.info_con_edad_en(photo.date, photo.dateAcc) %></span>
           <% if pp.display_points.present? %>
             <span style="font-size:10px;color:#888;">⬚</span>
           <% end %>
@@ -156,7 +161,7 @@
 
   var allPeople = [
     <% @people.each do |person| %>
-      { id: <%= person.id %>, name: "<%= j person.info_to_dropdown %>" },
+      { id: <%= person.id %>, name: "<%= j person.info_con_edad_en(photo.date, photo.dateAcc) %>" },
     <% end %>
   ];
 

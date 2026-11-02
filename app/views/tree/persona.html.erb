@@ -1,8 +1,5 @@
 <% content_for :title, @p ? @p.fullname : 'Árbol genealógico' %>
-<header>
-  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
-  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
-</header>
+<%= render 'header' %>
 <h1 class="page-title"><%= @p.fullname %></h1>
 
 
@@ -16,11 +13,11 @@
   Hijos
   <% if familia.consorts.length > 1 %>
   (
-  <a href=/tree/familia?f=<%= familia.id %>>
+  <%= link_to tree_familia_path(f: familia.id) do %>
   <%= @p.name %>
   <%= image_tag('anillos.gif', :width => '18') %>
   <%= ( familia.firstOtherconsort( @p ).nil? ? '' : familia.firstOtherconsort( @p ).name ) %>
-  </a>)
+  <% end %>)
   <% end %>
   </div>
 
@@ -30,15 +27,15 @@
 
   <div class="hijo">
     <div class="orden"><%= son.birthorder %></div>
-    <a href=?p=<%= son.id %>><div class="hijoNombre"><%= son.name %></div></a>
+    <%= link_to tree_persona_path(p: son.id) do %><div class="hijoNombre"><%= son.name %></div><% end %>
     <div class="hijoFecha"><%= son.dates %></div>
     <% son.consortof.each do |family| %>
-      <a href=familia?f=<%= family.id %>>
+      <%= link_to tree_familia_path(f: family.id) do %>
       <div class="conyuge">
         <%= image_tag('anillos.gif', :width => '18') %>
         <%= family.otherconsort( son ) %>
       </div>
-      </a>
+      <% end %>
     <% end %>
   </div>
 
@@ -49,38 +46,7 @@
 <% end %>
 
 
-<% if @photos.any? %>
-  <% has_prota_contour = @photos.any? { |photo| photo.people_photos.any? { |pp| pp.person_id == @p.id && pp.display_points&.any? } } %>
-  <% has_other_contour = @photos.any? { |photo| photo.people_photos.any? { |pp| pp.person_id != @p.id && pp.display_points&.any? } } %>
-  <div class="tituloSeccion">
-  Fotos
-  <%= render 'contour_mode_select', has_prota_contour: has_prota_contour, has_other_contour: has_other_contour, highlight_name: @p.name %>
-  </div>
-  <div class="hijos">
-  <% @photos.each do |photo| %>
-    <div class="foto">
-      <div class="tituloFoto">
-        <%= link_to photo.title, tree_foto_path(id: photo.id, p: @p.id) %>
-      </div>
-      <% if !photo.date.blank? || !photo.place.blank? %>
-        <div class="fechaFoto">
-          <%= IncompleteDate.new(date:photo.date,accurate:photo.dateAcc).to_s %>
-          <%= photo.place %>
-          <% unless @p.birthdate.nil? %>
-            (<%= IncompleteDate.new(date:@p.birthdate,accurate:@p.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) %>)
-          <% end %>
-        </div>
-      <% end %>
-      <%= render 'photo_contours', photo: photo, highlight_person: @p, image_link_path: tree_foto_path(id: photo.id, p: @p.id) %>
-      <% if !photo.owner.blank? %>
-        <div class="divOwner">
-          Foto de <%= photo.owner %>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
-  </div>
-<% end %>
+<%= render 'fotos_list', photos: @photos, person: @p %>
 
 <%= render 'contour_scripts', highlight_person_id: @p.id %>
 

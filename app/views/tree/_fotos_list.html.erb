@@ -1,0 +1,38 @@
+<%# locals: photos: (Array<Photo>), person: (Person) %>
+<% if photos.any? %>
+  <% has_prota_contour = photos.any? { |photo| photo.people_photos.any? { |pp| pp.person_id == person.id && pp.display_points&.any? } } %>
+  <% has_other_contour = photos.any? { |photo| photo.people_photos.any? { |pp| pp.person_id != person.id && pp.display_points&.any? } } %>
+  <div class="tituloSeccion">
+  Fotos
+  <%= render 'contour_mode_select', has_prota_contour: has_prota_contour, has_other_contour: has_other_contour, highlight_name: person.name %>
+  </div>
+  <div class="hijos">
+  <% photos.each do |photo| %>
+    <div class="foto">
+      <div class="tituloFoto">
+        <%= link_to photo.title, tree_foto_path(id: photo.id, p: person.id) %>
+      </div>
+      <% if !photo.date.blank? || !photo.place.blank? %>
+        <div class="fechaFoto">
+          <%= IncompleteDate.new(date:photo.date,accurate:photo.dateAcc).to_s %>
+          <%= photo.place %>
+          <% unless person.birthdate.nil? %>
+            (<%= IncompleteDate.new(date:person.birthdate,accurate:person.birthdateAcc).toStr(IncompleteDate.new(date:photo.date,accurate:photo.dateAcc)) %>)
+          <% end %>
+        </div>
+      <% end %>
+      <%= render 'photo_contours', photo: photo, highlight_person: person, image_link_path: tree_foto_path(id: photo.id, p: person.id) %>
+      <% if photo.owner_person || !photo.owner.blank? %>
+        <div class="divOwner">
+          Foto de
+          <% if photo.owner_person %>
+            <%= link_to photo.owner_person.name, tree_persona_path(p: photo.owner_person.id) %>
+          <% else %>
+            <%= photo.owner %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  </div>
+<% end %>

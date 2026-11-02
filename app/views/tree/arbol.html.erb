@@ -1,0 +1,399 @@
+<% content_for :title, "Árbol de #{@p.fullname}" %>
+<%= render 'header' %>
+<h1 class="page-title">Árbol de <%= @p.fullname %></h1>
+
+<div id="arbol-wrap">
+  <% if @root_family_id %>
+    <div id="arbol"></div>
+  <% else %>
+    <p>No hay familia registrada para esta persona.</p>
+  <% end %>
+</div>
+
+<style>
+#arbol-wrap {
+  overflow: auto;
+  padding: 16px 16px 48px;
+}
+
+#arbol {
+  position: relative;
+}
+
+.tree-lines-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* ── tree structure ─────────────────── */
+.tree-gen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree-couple {
+  display: flex;
+  align-items: flex-start;
+  gap: 56px;
+  margin-bottom: 44px;
+  position: relative;
+}
+
+.tree-person {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  text-align: center;
+  min-width: 120px;
+  max-width: 160px;
+  cursor: default;
+  position: relative;
+}
+
+.tree-person.tree-person-root {
+  border: 2px solid rgb(7, 7, 134);
+}
+
+.tree-person .tp-name {
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1.3;
+}
+
+.tree-person .tp-dates {
+  font-size: 11px;
+  color: #660033;
+  font-style: italic;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.tree-person .tp-up {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  font-size: 11px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 2px 6px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  white-space: nowrap;
+  display: none;
+}
+.tree-person:hover .tp-up { display: block; }
+.tree-person .tp-up:hover { color: #660033; border-color: #660033; }
+
+.tree-ellipses-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.tree-couple-ellipse {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border: 1px solid #cc8800;
+  border-radius: 50%;
+  padding: 6px 14px;
+  background: #fffaf0;
+  color: #cc8800;
+  font-size: 11px;
+  font-style: italic;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.tree-children {
+  display: none;
+  gap: 16px;
+  align-items: flex-start;
+  position: relative;
+}
+.tree-children.visible {
+  display: flex;
+}
+
+/* expand button below a child */
+.tree-expand {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #999;
+  cursor: pointer;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 1px 8px;
+  transition: color .15s, border-color .15s;
+}
+.tree-expand:hover { color: #660033; border-color: #660033; }
+.tree-expand.open { color: #660033; border-color: #660033; }
+</style>
+
+<% if @root_family_id %>
+<script>
+const ROOT_FAMILY_ID = <%= @root_family_id %>;
+const ROOT_PERSON_ID = <%= @p.id %>;
+const cache   = {};
+
+function withParam(url, param, value) {
+  return url + (url.indexOf('?') === -1 ? '?' : '&') + param + '=' + encodeURIComponent(value);
+}
+
+async function loadFamily(id) {
+  if (cache[id]) return cache[id];
+  const r = await fetch(withParam(<%= raw tree_familia_json_path.to_json %>, 'f', id));
+  const data = await r.json();
+  cache[id] = data;
+  return data;
+}
+
+function personCard(p, opts = {}) {
+  const div = document.createElement('div');
+  div.className = 'tree-person' + (p.id === ROOT_PERSON_ID ? ' tree-person-root' : '');
+  div.dataset.personId = p.id;
+
+  if (opts.showUp && p.childrenof_id) {
+    const up = document.createElement('span');
+    up.className = 'tp-up';
+    up.textContent = '▲ padres';
+    up.addEventListener('click', async e => {
+      e.stopPropagation();
+      const wrap = div.closest('.tree-gen');
+      const data = await loadFamily(p.childrenof_id);
+      const parentGen = buildFamilyBlock(data, { above: true });
+      wrap.insertBefore(parentGen, wrap.firstChild);
+      up.remove();
+      drawLines();
+    });
+    div.appendChild(up);
+  }
+
+  const name = document.createElement('div');
+  name.className = 'tp-name';
+  name.textContent = p.name;
+  div.appendChild(name);
+
+  if (p.dates) {
+    const dates = document.createElement('div');
+    dates.className = 'tp-dates';
+    dates.textContent = p.dates;
+    div.appendChild(dates);
+  }
+
+  div.addEventListener('click', () => {
+    window.location.href = withParam(<%= raw tree_persona_path.to_json %>, 'p', p.id);
+  });
+  div.style.cursor = 'pointer';
+
+  return div;
+}
+
+function buildFamilyBlock(data, opts = {}) {
+  const gen = document.createElement('div');
+  gen.className = 'tree-gen';
+  gen.dataset.familyId = data.id;
+
+  // ── couple row ──────────────────────
+  const coupleRow = document.createElement('div');
+  coupleRow.className = 'tree-couple';
+  coupleRow.dataset.marriageDate = data.marriage_date || '';
+
+  data.consorts.forEach(p => coupleRow.appendChild(personCard(p, { showUp: true })));
+  gen.appendChild(coupleRow);
+
+  if (data.children.length === 0) return gen;
+
+  // ── children row ─────────────────────
+  const childrenRow = document.createElement('div');
+  childrenRow.className = 'tree-children visible';
+  data.children.forEach(child => childrenRow.appendChild(buildChildCol(child)));
+  gen.appendChild(childrenRow);
+
+  return gen;
+}
+
+// a child is rendered as its own mini tree-gen, so that expanding its family
+// (▼) extends the SAME card with a connector + spouse instead of creating a
+// duplicate card for the child
+function buildChildCol(child) {
+  const gen = document.createElement('div');
+  gen.className = 'tree-gen';
+  gen.dataset.personId = child.id;
+
+  const coupleRow = document.createElement('div');
+  coupleRow.className = 'tree-couple';
+  coupleRow.appendChild(personCard(child));
+  gen.appendChild(coupleRow);
+
+  if (child.consortof && child.consortof.length > 0) {
+    const famId = child.consortof[0];
+    const btn = document.createElement('button');
+    btn.className = 'tree-expand';
+    btn.textContent = '▼';
+    btn.title = 'Ver familia';
+    gen.appendChild(btn);
+
+    let loaded = false;
+    let open = false;
+    let childrenRow = null;
+    const shouldAutoOpen = child.id === ROOT_PERSON_ID;
+
+    async function abrir() {
+      if (!loaded) {
+        btn.textContent = '…';
+        const subData = await loadFamily(famId);
+
+        coupleRow.dataset.marriageDate = subData.marriage_date || '';
+        subData.consorts.filter(c => c.id !== child.id).forEach(spouse => {
+          coupleRow.appendChild(personCard(spouse, { showUp: true }));
+        });
+
+        if (subData.children.length > 0) {
+          childrenRow = document.createElement('div');
+          childrenRow.className = 'tree-children';
+          subData.children.forEach(grandchild => childrenRow.appendChild(buildChildCol(grandchild)));
+          gen.appendChild(childrenRow);
+        }
+
+        loaded = true;
+      }
+
+      open = !open;
+      Array.from(coupleRow.children).forEach((el, idx) => {
+        if (idx > 0) el.style.display = open ? '' : 'none';
+      });
+      if (childrenRow) childrenRow.classList.toggle('visible', open);
+      btn.classList.toggle('open', open);
+      btn.textContent = open ? '▲' : '▼';
+      drawLines();
+    }
+
+    btn.addEventListener('click', e => { e.stopPropagation(); abrir(); });
+
+    if (shouldAutoOpen) abrir();
+  }
+
+  return gen;
+}
+
+const svgNS = 'http://www.w3.org/2000/svg';
+
+function drawLines() {
+  requestAnimationFrame(() => {
+    const root = document.getElementById('arbol');
+    if (!root) return;
+
+    let svg = root.querySelector(':scope > svg.tree-lines-svg');
+    if (!svg) {
+      svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('class', 'tree-lines-svg');
+      root.insertBefore(svg, root.firstChild);
+    }
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    let ellipsesLayer = root.querySelector(':scope > .tree-ellipses-layer');
+    if (!ellipsesLayer) {
+      ellipsesLayer = document.createElement('div');
+      ellipsesLayer.className = 'tree-ellipses-layer';
+      root.insertBefore(ellipsesLayer, svg.nextSibling);
+    }
+    while (ellipsesLayer.firstChild) ellipsesLayer.removeChild(ellipsesLayer.firstChild);
+
+    const rootRect = root.getBoundingClientRect();
+
+    function addLine(x1, y1, x2, y2) {
+      const linea = document.createElementNS(svgNS, 'line');
+      linea.setAttribute('x1', x1);
+      linea.setAttribute('y1', y1);
+      linea.setAttribute('x2', x2);
+      linea.setAttribute('y2', y2);
+      linea.setAttribute('stroke', '#ccc');
+      linea.setAttribute('stroke-width', '2');
+      svg.appendChild(linea);
+    }
+
+    document.querySelectorAll('.tree-gen').forEach(gen => {
+      if (gen.offsetParent === null) return;
+
+      const coupleRow = gen.querySelector(':scope > .tree-couple');
+      let source = null;
+
+      if (coupleRow) {
+        // ellipses/lines are recomputed from scratch each time, so only
+        // currently-visible boxes (spouse may be collapsed) count
+        const boxes = Array.from(coupleRow.children).filter(el =>
+          el.classList.contains('tree-person') && el.offsetParent !== null
+        );
+
+        if (boxes.length >= 2) {
+          for (let i = 1; i < boxes.length; i++) {
+            const a = boxes[i - 1].getBoundingClientRect();
+            const b = boxes[i].getBoundingClientRect();
+            const ax = a.left + a.width / 2 - rootRect.left;
+            const ay = a.bottom - rootRect.top;
+            const bx = b.left + b.width / 2 - rootRect.left;
+            const by = b.bottom - rootRect.top;
+            const ex = (ax + bx) / 2;
+            const ey = Math.max(ay, by) + 22;
+
+            addLine(ax, ay, ex, ey);
+            addLine(bx, by, ex, ey);
+
+            const ellipse = document.createElement('div');
+            ellipse.className = 'tree-couple-ellipse';
+            ellipse.textContent = coupleRow.dataset.marriageDate || '';
+            ellipse.style.left = ex + 'px';
+            ellipse.style.top = ey + 'px';
+            ellipsesLayer.appendChild(ellipse);
+
+            if (!source) source = { x: ex, y: ey };
+          }
+        } else if (boxes.length === 1) {
+          const b = boxes[0].getBoundingClientRect();
+          source = {
+            x: b.left + b.width / 2 - rootRect.left,
+            y: b.bottom - rootRect.top
+          };
+        }
+      }
+
+      const childrenRow = gen.querySelector(':scope > .tree-children');
+      if (!source || !childrenRow || !childrenRow.classList.contains('visible')) return;
+
+      gen.querySelectorAll(':scope > .tree-children > .tree-gen > .tree-couple > .tree-person:first-child').forEach(childCard => {
+        const c = childCard.getBoundingClientRect();
+        const x2 = c.left + c.width / 2 - rootRect.left;
+        const y2 = c.top - rootRect.top;
+        addLine(source.x, source.y, x2, y2);
+      });
+    });
+  });
+}
+
+window.addEventListener('resize', drawLines);
+
+(async () => {
+  const data = await loadFamily(ROOT_FAMILY_ID);
+  const block = buildFamilyBlock(data);
+  document.getElementById('arbol').appendChild(block);
+  drawLines();
+
+  const rootCard = document.querySelector('.tree-person-root');
+  if (rootCard) rootCard.scrollIntoView({ block: 'center', inline: 'center' });
+})();
+</script>
+<% end %>

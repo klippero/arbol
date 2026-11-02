@@ -1,0 +1,10 @@
+<% content_for :title, "Mis fotos" %>
+<%= render 'header' %>
+<h1 class="page-title">Mis fotos</h1>
+
+<% if @photos.any? %>
+  <%= render 'fotos_list', photos: @photos, person: @p %>
+  <%= render 'contour_scripts', highlight_person_id: @p.id %>
+<% else %>
+  <p style="padding:0 20px;">No hay fotos de <%= @p.name %>.</p>
+<% end %>

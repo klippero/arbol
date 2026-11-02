@@ -10,6 +10,7 @@ class TreeController < ApplicationController
     f = Family.find(params[:f].to_i)
     render json: {
       id:       f.id,
+      marriage_date: f.marriagedate ? IncompleteDate.new(date: f.marriagedate, accurate: f.marriagedateAcc).to_s : nil,
       consorts: f.consorts.map { |p|
         { id: p.id, name: p.name, fullname: p.fullname, dates: p.dates,
           childrenof_id: p.childrenof_id }
@@ -38,6 +39,7 @@ class TreeController < ApplicationController
   def persona
     if params[:p]
       @p = Person.find(params[:p].to_i)
+      @impersonate_candidate = @p
       @photos = @p.photos.includes(:people, people_photos: :person).sort_by { |p| p.date || Date.new(0) }
       @f = @p.childrenof
     else
@@ -50,6 +52,22 @@ class TreeController < ApplicationController
     @p = Person.find(params[:p].to_i)
   end
 
+  def parentesco
+    @p = Person.find(params[:p].to_i)
+    @camino = effective_person ? Person.path_between(effective_person, @p) : nil
+    @filas = Person.parentesco_filas(@camino)
+  end
+
+  def arbol
+    @p = Person.find(params[:p].to_i)
+    @root_family_id = @p.childrenof_id || @p.consortof.first&.id
+  end
+
+  def mis_fotos
+    @p = effective_person
+    @photos = @p.owned_photos.includes(:people, people_photos: :person).sort_by { |p| p.date || Date.new(0) }
+  end
+
   def foto
     @photo = Photo.find(params[:id])
     @back_person = Person.find_by(id: params[:p]) if params[:p].present?
@@ -59,9 +77,11 @@ class TreeController < ApplicationController
   def fechas
     eventos = []
     kind_order = { nacimiento: 0, defuncion: 1 }
-    related_ids = Person.related_to_root_ids
+    related_ids = effective_person ? Person.related_to_ids(effective_person) : nil
 
-    Person.where.not(birthdate: nil).where(id: related_ids).find_each do |p|
+    nacimientos = Person.where.not(birthdate: nil)
+    nacimientos = nacimientos.where(id: related_ids) if related_ids
+    nacimientos.find_each do |p|
       inc = IncompleteDate.new(date: p.birthdate, accurate: p.birthdateAcc)
       next unless inc.month? && inc.day?
       t = inc.to
@@ -75,7 +95,9 @@ class TreeController < ApplicationController
       }
     end
 
-    Person.where.not(death: nil).where(id: related_ids).find_each do |p|
+    defunciones = Person.where.not(death: nil)
+    defunciones = defunciones.where(id: related_ids) if related_ids
+    defunciones.find_each do |p|
       next unless p.fallecio?
       di = IncompleteDate.new(date: p.death, accurate: p.deathAcc)
       next unless di.month? && di.day?
@@ -121,16 +143,17 @@ class TreeController < ApplicationController
       scope = scope.where("(#{haystack} LIKE :t OR #{date_match})", t: token)
     end
 
-    related_ids = Person.related_to_root_ids
-    people = scope.where(id: related_ids)
-                  .order(Arel.sql("COALESCE(people.surname,''), COALESCE(people.name,'')"))
-                  .limit(25)
+    related_ids = effective_person ? Person.related_to_ids(effective_person) : nil
+    people = scope
+    people = people.where(id: related_ids) if related_ids
+    people = people.order(Arel.sql("COALESCE(people.surname,''), COALESCE(people.name,'')"))
+                    .limit(25)
     render json: people.map { |p|
       {
         id: p.id,
         label: p.fullname.strip,
         dates: p.dates,
-        url: "/tree/persona?p=#{p.id}"
+        url: tree_persona_path(p: p.id)
       }
     }
   end
@@ -142,14 +165,27 @@ class TreeController < ApplicationController
   def versiones
     @versiones = [
       {
-        version: "v3.0",
-        fecha: "hoy",
+        version: "v4.0",
+        fecha: "1/11/2026",
         actual: true,
         cambios: [
-          "Contornos de personas en las fotos (persona, familia y foto): mostrar/ocultar por protagonista o para todos, etiquetas con el nombre que nunca se salen de la foto",
-          "El buscador y la home solo muestran personas con relación familiar (sanguínea o política) conmigo, de cualquier grado",
-          "Correcciones en fechas y edades: no mostrar edades imposibles cuando no se conoce el año, \"hoy\"/\"mañana\" en el listado de próximas fechas, sin paréntesis vacíos",
-          "Numeración y maquetación del listado de personas al pie de cada foto"
+          "Identificación de usuarios con personas",
+          "Navegar la aplicación como si fuese otro usuario (solo para el administrador)",
+          "Relación de propiedad de foto con personas en lugar de texto",
+          "Diagrama de parentesco",
+          "Identificación del género sin necesidad de un diccionario completo",
+          "Nuevas relaciones: tío/tía política, bisabuelo, tatarabuelo",
+          "Fixes: detección de parientes políticos, si la persona buscada ya no existe se redirige a la home en vez de dar error"
+        ]
+      },
+      {
+        version: "v3.0",
+        fecha: "4/10/2026",
+        actual: false,
+        cambios: [
+          "Contornos de personas en las fotos: mostrar/ocultar por protagonista o para todos",
+          "El buscador y la home solo muestran personas con relación familiar (sanguínea o política)",
+          "Fixes: fechas y edades en el listado de próximas fechas, numeración y maquetación del listado de personas al pie de fotos"
         ]
       },
       {

@@ -1,0 +1,25 @@
+<header>
+  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), "#" %></div>
+</header>
+<h1 class="page-title">Completa tu registro</h1>
+
+<p style="padding:0 20px;">Antes de continuar, dinos quién eres en el árbol genealógico.</p>
+
+<% if @error %>
+  <p style="padding:0 20px;color:#900;"><%= @error %></p>
+<% end %>
+
+<%= form_with url: complete_profile_path, method: :patch, scope: :user do |f| %>
+  <div class="field" style="padding:0 20px;">
+    <%= render "users/person_picker", f: f, current_person: current_user.person %>
+  </div>
+
+  <div class="actions" style="padding:16px 20px;">
+    <%= f.submit "Continuar" %>
+  </div>
+<% end %>
+
+<p style="padding:0 20px;">
+  <%= button_to "Salir", destroy_user_session_path, method: :delete,
+        class: "nav-menu-logout-btn", form: { class: "nav-menu-logout-form" } %>
+</p>

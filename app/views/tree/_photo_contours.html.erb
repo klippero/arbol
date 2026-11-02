@@ -91,13 +91,13 @@
     <% has_c  = pp_p&.display_points&.any? %>
     <% li_class = [(highlight_person && person == highlight_person ? 'prota' : nil), (has_c ? 'tieneContorno' : 'sinContorno')].compact.join(' ') %>
     <% relacion = highlight_person ? highlight_person.relacionCon(person).to_s : '' %>
-    <a href="/tree/persona?p=<%= person.id %>">
+    <%= link_to tree_persona_path(p: person.id) do %>
       <li class="<%= li_class %>" data-person-id="<%= person.id %>"><%= person.name %><%= age.blank? ? '' : ' (' + age + ')' %>
         <% if relacion.present? %>
           <%= age.blank? ? "(#{relacion})" : relacion %>
         <% end %>
       </li>
-    </a>
+    <% end %>
   <% end %>
 </ul>
 </div>

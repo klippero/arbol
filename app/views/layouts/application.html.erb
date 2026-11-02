@@ -15,5 +15,18 @@
     <p class=”alert”><%= alert %></p>
 
     <%= yield %>
+
+    <% if user_signed_in? && puede_suplantar? %>
+      <footer class="debug-footer">
+        <% if impersonando? %>
+          <% stay_params = request.query_parameters.except("s") %>
+          <% stay_url = stay_params.empty? ? request.path : "#{request.path}?#{stay_params.to_query}" %>
+          <%= link_to "Debug: dejar de navegar como #{effective_person.name}", stay_url %>
+        <% elsif @impersonate_candidate && @impersonate_candidate.id != current_user.person_id %>
+          <%= link_to "Debug: empezar a navegar como #{@impersonate_candidate.name}",
+                tree_persona_path(p: @impersonate_candidate.id, s: @impersonate_candidate.id) %>
+        <% end %>
+      </footer>
+    <% end %>
   </body>
 </html>

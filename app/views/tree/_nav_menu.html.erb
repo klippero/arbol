@@ -5,9 +5,15 @@
       <input type="search" id="nav-busqueda-q" class="persona-busqueda-input" autocomplete="off" placeholder="Buscar persona…" spellcheck="false">
       <ul id="nav-busqueda-resultados" class="persona-busqueda-resultados" hidden></ul>
     </div>
+    <% if effective_person&.owned_photos&.any? %>
+      <div class="nav-menu-mis-fotos">
+        <%= link_to "Mis fotos", tree_mis_fotos_path, class: "nav-menu-mis-fotos-link" %>
+      </div>
+    <% end %>
     <div class="nav-menu-logout">
-      <%= link_to "Salir", destroy_user_session_path, data: { turbo_method: :delete } %>
-      <%= link_to "v3.0", tree_versiones_path, class: "nav-menu-version" %>
+      <%= button_to "Salir", destroy_user_session_path, method: :delete,
+            class: "nav-menu-logout-btn", form: { class: "nav-menu-logout-form" } %>
+      <%= link_to "v4.0", tree_versiones_path, class: "nav-menu-version" %>
     </div>
   </div>
 </div>
@@ -63,7 +69,7 @@
       timer = setTimeout(function () {
         var q = input.value.trim();
         if (q.length < 2) { clearList(); return; }
-        fetch(url + "?q=" + encodeURIComponent(q), {
+        fetch(url + (url.indexOf("?") === -1 ? "?" : "&") + "q=" + encodeURIComponent(q), {
           headers: { Accept: "application/json" },
           credentials: "same-origin"
         }).then(function (r) { return r.json(); }).then(renderItems).catch(clearList);

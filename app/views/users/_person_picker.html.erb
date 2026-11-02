@@ -1,0 +1,74 @@
+<%# locals: f: (form builder), current_person: (nilable Person), field: (symbol, default :person_id),
+    include_fallecidos: (bool, default false) %>
+<% field ||= :person_id %>
+<% people_scope = local_assigns[:include_fallecidos] ? Person.all : Person.all.reject(&:fallecio?) %>
+<% dom_id = "person-picker-#{field}" %>
+<%= f.hidden_field field, id: "#{dom_id}-id" %>
+<div style="position:relative;display:inline-block;">
+  <input type="text" id="<%= dom_id %>-search" placeholder="Busca un nombre…" autocomplete="off"
+         style="width:280px;padding:4px 6px;<%= current_person ? 'display:none;' : '' %>">
+  <div id="<%= dom_id %>-list"
+       style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #ccc;
+              width:320px;max-height:220px;overflow-y:auto;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,.15);">
+  </div>
+</div>
+<p id="<%= dom_id %>-selected" style="margin-top:6px;<%= current_person ? '' : 'display:none;' %>">
+  <span id="<%= dom_id %>-selected-name"><%= current_person&.fullname %></span>
+  <a href="#" id="<%= dom_id %>-clear" style="margin-left:6px;font-weight:bold;color:#900;text-decoration:none;">×</a>
+</p>
+
+<script>
+(function () {
+  var allPeople = [
+    <% people_scope.sort_by { |p| [p.surname.to_s, p.surname2.to_s, p.name.to_s] }.each do |person| %>
+      { id: <%= person.id %>, name: "<%= j person.fullname %>" },
+    <% end %>
+  ];
+
+  var hiddenField = document.getElementById('<%= dom_id %>-id');
+  var searchInput = document.getElementById('<%= dom_id %>-search');
+  var dropdown     = document.getElementById('<%= dom_id %>-list');
+  var selectedP    = document.getElementById('<%= dom_id %>-selected');
+  var clearLink    = document.getElementById('<%= dom_id %>-clear');
+
+  searchInput.addEventListener('input', function () {
+    var q = this.value.toLowerCase().trim();
+    if (!q) { dropdown.style.display = 'none'; return; }
+    var matches = allPeople.filter(function (p) {
+      return p.name.toLowerCase().includes(q);
+    }).slice(0, 15);
+    if (!matches.length) { dropdown.style.display = 'none'; return; }
+    dropdown.innerHTML = matches.map(function (p) {
+      return '<div style="padding:5px 8px;cursor:pointer;"' +
+             ' onmousedown="window.__pickPersonPicker_<%= field %>(' + p.id + ');return false;"' +
+             ' onmouseover="this.style.background=\'#f0f0f0\'"' +
+             ' onmouseout="this.style.background=\'\'">' + p.name + '</div>';
+    }).join('');
+    dropdown.style.display = 'block';
+  });
+
+  searchInput.addEventListener('blur', function () {
+    setTimeout(function () { dropdown.style.display = 'none'; }, 200);
+  });
+
+  window.__pickPersonPicker_<%= field %> = function (id) {
+    var person = allPeople.find(function (p) { return p.id === id; });
+    if (!person) return;
+    hiddenField.value = person.id;
+    searchInput.value = '';
+    dropdown.style.display = 'none';
+    searchInput.style.display = 'none';
+    selectedP.style.display = '';
+    document.getElementById('<%= dom_id %>-selected-name').textContent = person.name;
+  };
+
+  clearLink.addEventListener('click', function (e) {
+    e.preventDefault();
+    hiddenField.value = '';
+    selectedP.style.display = 'none';
+    searchInput.style.display = '';
+    searchInput.value = '';
+    searchInput.focus();
+  });
+})();
+</script>

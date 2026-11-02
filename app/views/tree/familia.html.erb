@@ -1,8 +1,5 @@
 <% content_for :title, "Familia #{@f.name}" %>
-<header>
-  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
-  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
-</header>
+<%= render 'header' %>
 <h1 class="page-title">Familia <%= @f.name %></h1>
 
 <div class="progenitores">
@@ -10,27 +7,23 @@
   <% if @f.consorts.length > 0 %>
 
     <div class="progenitor">
-      <a href=/tree/persona?p=<%= @f.consorts[0].id %>>
+      <%= link_to tree_persona_path(p: @f.consorts[0].id) do %>
         <div class="nombreApellidos">
           <%= @f.consorts[0].fullname %>
         </div>
-      </a>
+      <% end %>
       <div class="nacimientoYdefuncion">
         <%= @f.consorts[0].dates %>
       </div>
       <% if @f.consorts[0].childrenof && @f.consorts[0].childrenof.consorts.length > 0 %>
-        <% if !@f.consorts[0].childrenof.blank? %>
-          <a href=?f=<%= @f.consorts[0].childrenof.id %>>
-        <% end %>
-        <div class="abuelos">
-          <%= @f.consorts[0].childrenof.consorts[0].name %>
-          <% if @f.consorts[0].childrenof.consorts.length > 1 %>
-            <%= image_tag('anillos.gif', :width => '18') %>
-            <%= @f.consorts[0].childrenof.consorts[1].name %>
-          <% end %>
-        </div>
-        <% if !@f.consorts[0].childrenof.blank? %>
-          </a>
+        <%= link_to tree_familia_path(f: @f.consorts[0].childrenof.id) do %>
+          <div class="abuelos">
+            <%= @f.consorts[0].childrenof.consorts[0].name %>
+            <% if @f.consorts[0].childrenof.consorts.length > 1 %>
+              <%= image_tag('anillos.gif', :width => '18') %>
+              <%= @f.consorts[0].childrenof.consorts[1].name %>
+            <% end %>
+          </div>
         <% end %>
       <% end %>
     </div>
@@ -48,27 +41,23 @@
     </div>
 
     <div class="progenitor">
-      <a href=/tree/persona?p=<%= @f.consorts[1].id %>>
+      <%= link_to tree_persona_path(p: @f.consorts[1].id) do %>
         <div class="nombreApellidos">
           <%= @f.consorts[1].fullname %>
         </div>
-      </a>
+      <% end %>
       <div class="nacimientoYdefuncion">
         <%= @f.consorts[1].dates %>
       </div>
       <% if @f.consorts[1].childrenof && @f.consorts[1].childrenof.consorts.length > 0 %>
-        <% if !@f.consorts[1].childrenof.blank? %>
-          <a href=?f=<%= @f.consorts[1].childrenof.id %>>
-        <% end %>
-        <div class="abuelos">
-          <%= @f.consorts[1].childrenof.consorts[0].name %>
-          <% if @f.consorts[1].childrenof.consorts.length > 1 %>
-            <%= image_tag('anillos.gif', :width => '18') %>
-            <%= @f.consorts[1].childrenof.consorts[1].name %>
-          <% end %>
-        </div>
-        <% if !@f.consorts[1].childrenof.blank? %>
-          </a>
+        <%= link_to tree_familia_path(f: @f.consorts[1].childrenof.id) do %>
+          <div class="abuelos">
+            <%= @f.consorts[1].childrenof.consorts[0].name %>
+            <% if @f.consorts[1].childrenof.consorts.length > 1 %>
+              <%= image_tag('anillos.gif', :width => '18') %>
+              <%= @f.consorts[1].childrenof.consorts[1].name %>
+            <% end %>
+          </div>
         <% end %>
       <% end %>
     </div>
@@ -81,15 +70,15 @@
 <% @f.children.sort_by { |a| a[:birthorder]?a[:birthorder]:99 }.each do |son| %>
   <div class="hijo">
     <div class="orden"><%= son.birthorder %></div>
-    <a href=/tree/persona?p=<%= son.id %>><div class="hijoNombre"><%= son.name %></div></a>
+    <%= link_to tree_persona_path(p: son.id) do %><div class="hijoNombre"><%= son.name %></div><% end %>
     <div class="hijoFecha"><%= son.dates %></div>
     <% son.consortof.each do |family| %>
-      <a href=?f=<%= family.id %>>
+      <%= link_to tree_familia_path(f: family.id) do %>
       <div class="conyuge">
         <%= image_tag('anillos.gif', :width => '18') %>
         <%= family.otherconsort( son ) %>
       </div>
-      </a>
+      <% end %>
     <% end %>
   </div>
 <% end %>
@@ -117,9 +106,14 @@
         </div>
       <% end %>
       <%= render 'photo_contours', photo: photo, highlight_person: nil, image_link_path: tree_foto_path(id: photo.id, f: @f.id) %>
-      <% if !photo.owner.blank? %>
+      <% if photo.owner_person || !photo.owner.blank? %>
         <div class="divOwner">
-          Foto de <%= photo.owner %>
+          Foto de
+          <% if photo.owner_person %>
+            <%= link_to photo.owner_person.name, tree_persona_path(p: photo.owner_person.id) %>
+          <% else %>
+            <%= photo.owner %>
+          <% end %>
         </div>
       <% end %>
     </div>

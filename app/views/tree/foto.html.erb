@@ -7,9 +7,9 @@
       <ul>
         <li>
           <% if @back_person %>
-            <%= link_to "← #{@back_person.fullname}", "/tree/persona?p=#{@back_person.id}" %>
+            <%= link_to "← #{@back_person.fullname}", tree_persona_path(p: @back_person.id) %>
           <% elsif @back_family %>
-            <%= link_to "← Familia #{@back_family.name}", "/tree/familia?f=#{@back_family.id}" %>
+            <%= link_to "← Familia #{@back_family.name}", tree_familia_path(f: @back_family.id) %>
           <% end %>
         </li>
       </ul>
@@ -35,9 +35,14 @@
     <% has_other_contour = @photo.people_photos.any? { |pp| pp.person_id != @back_person&.id && pp.display_points&.any? } %>
     <%= render 'contour_mode_select', has_prota_contour: has_prota_contour, has_other_contour: has_other_contour, highlight_name: @back_person&.name %>
     <%= render 'photo_contours', photo: @photo, highlight_person: @back_person, image_link_path: nil %>
-    <% if @photo.owner.present? %>
+    <% if @photo.owner_person || @photo.owner.present? %>
       <div class="divOwner">
-        Foto de <%= @photo.owner %>
+        Foto de
+        <% if @photo.owner_person %>
+          <%= link_to @photo.owner_person.name, tree_persona_path(p: @photo.owner_person.id) %>
+        <% else %>
+          <%= @photo.owner %>
+        <% end %>
       </div>
     <% end %>
   </div>

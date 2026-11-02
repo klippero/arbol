@@ -1,7 +1,4 @@
-<header>
-  <div class="header-left"><%= link_to image_tag('logo.svg', width: 40), tree_fechas_path %></div>
-  <div class="header-right"><%= current_user.email.split('@').first %><%= render 'nav_menu' %></div>
-</header>
+<%= render 'header' %>
 <h1 class="page-title">Fechas</h1>
 
 <div class="persona-busqueda" data-url="<%= tree_personas_buscar_path %>">
@@ -28,7 +25,7 @@
         <% next_date = ev[:next_date] %>
         <tr class="fechas-lista-fila">
           <td class="fechas-lista-principal">
-            <%= link_to "/tree/persona?p=#{person.id}", class: "fechas-lista-enlace" do %>
+            <%= link_to tree_persona_path(p: person.id), class: "fechas-lista-enlace" do %>
               <span class="fechas-lista-texto">
                 <% if ev[:kind] == :defuncion %>
                   <% dm = person.defuncion_dia_mes_corto %>
@@ -104,7 +101,7 @@
         clearList();
         return;
       }
-      fetch(url + "?q=" + encodeURIComponent(q), {
+      fetch(url + (url.indexOf("?") === -1 ? "?" : "&") + "q=" + encodeURIComponent(q), {
         headers: { Accept: "application/json" },
         credentials: "same-origin"
       })

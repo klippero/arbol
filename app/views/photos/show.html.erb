@@ -5,7 +5,7 @@
 <p><strong>Date:</strong> <%= @photo.date %></p>
 <p><strong>Dateacc:</strong> <%= @photo.dateAcc %></p>
 <p><strong>Place:</strong> <%= @photo.place %></p>
-<p><strong>Owner:</strong> <%= @photo.owner %></p>
+<p><strong>Owner:</strong> <%= @photo.owner_label %></p>
 <p><strong>Content:</strong> <%= @photo.content %></p>
 
 <% if @photo.image.attached? %>
@@ -41,7 +41,7 @@
               onclick="togglePoly(this)"
               style="display:inline-block;margin:2px 4px 2px 0;padding:3px 8px;
                      background:#eee;border:1px solid #bbb;cursor:pointer;user-select:none;">
-          <%= pp.person.info_to_dropdown %>
+          <%= pp.person.info_con_edad_en(@photo.date, @photo.dateAcc) %>
           <% if pp.display_points.present? %>
             <span style="font-size:10px;color:#888;">⬚</span>
           <% end %>
